@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <meta name="Descripcion" content="Sistema de préstamos y adeudos de la Universidad La Salle Nezahualcoyotl">
+        <meta name="Equipo 4" content="Sistema de Préstamos y Adeudos"> 
+
+        <title>La Salle Nezahualcoyotl | Préstamos y Adeudos</title>
+        
+        <!-- Firebase SDK -->
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>        <script src="js/firebase-config.js"></script>
+        <script src="js/auth.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+        <script src="js/fingerprint-manager.js"></script>
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans&display=swap" rel="stylesheet">
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/bootstrap-icons.css" rel="stylesheet">
+        <link href="css/estilos.css" rel="stylesheet">
+    </head>
+    
+    <body id="top">
+        <main>
+            <nav class="navbar navbar-expand-lg">
+                <div class="container">
+                    <a class="navbar-brand" href="index.html">
+                        <img src="images/lasalle-logo.png" alt="Logo La Salle" style="height: 55px; vertical-align: middle; margin-right: 8px;">
+                    </a>
+
+                    <div class="d-lg-none ms-auto me-4">
+                        <a href="#top" class="navbar-icon bi-person smoothscroll"></a>
+                    </div>
+    
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+    
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-lg-5 me-lg-auto">
+                            <li class="nav-item">
+                                <a class="nav-link click-scroll" href="#section_1">Inicio</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link click-scroll" href="#section_2">Explorar</a>
+                            </li>
+    
+                            <li class="nav-item">
+                                <a class="nav-link click-scroll" href="#section_3">Como funciona</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link click-scroll" href="#section_4">Preguntas Comunes</a>
+                            </li>
+    
+                            <li class="nav-item">
+                                <a class="nav-link click-scroll" href="#section_5">Contacto</a>
+                            </li>
+
+                            <!-- Menú de administración solo visible para admins -->
+                            <li class="nav-item dropdown admin-only" style="display: none;">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
+                                <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" href="lista-prestamos.html">Ver alumnos con préstamo</a></li>
+                                    <li><a class="dropdown-item" href="adeudo.html">Generar adeudo manual</a></li>
+                                    <li><a class="dropdown-item" href="lista-adeudos.html">Ver alumnos con adeudo</a></li>
+                                </ul>
+                            </li>
+                        </ul>                    <div class="user-menu" id="userMenu">
+                            <!-- Se actualiza dinámicamente con JS -->
+                        </div>
+                        <script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const isAdmin = await checkIfAdmin();
+    const userMenu = document.getElementById('userMenu');
+    function getManualUser() {
+        if (sessionStorage.getItem('isAuthenticated') === 'true' && window.auth && window.auth.authState && window.auth.authState.user) {
+            return window.auth.authState.user;
+        }
+        return null;
+    }
+    function renderUserMenu(user) {
+        if (user) {
+            userMenu.innerHTML = `<a href="#" class="navbar-icon bi-person"></a>
+            <div class="dropdown-content" id="userDropdown">
+                <div class="user-info">Hola, ${user.displayName || user.nombre || user.email}</div>
+                <a href="prestamos.html">Mis Préstamos</a>
+                <a href="#" onclick="handleSignOut(); return false;">Cerrar sesión</a>
+            </div>`;
+        } else {
+            userMenu.innerHTML = `<a href="#" class="navbar-icon bi-person"></a>
+            <div class="dropdown-content" id="userDropdown">
+                <a href="sistema-prestamos.html">Iniciar sesión</a>
+                <a href="sistema-prestamos.html#register">Registrarse</a>
+            </div>`;
+        }
+    }
+    if (isAdmin) {
+        userMenu.innerHTML = '<span class="admin-label">Admin</span>';
+        document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'block');
+    } else {
+        // Listen for Firebase Auth changes
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                renderUserMenu(user);
+            } else {
+                // Check for manual login
+                const manualUser = getManualUser();
+                if (manualUser) {
+                    renderUserMenu(manualUser);
+                } else {
+                    renderUserMenu(null);
+                }
+            }
+        });
+        // Fallback: if already logged in manually, render immediately
+        if (!firebase.auth().currentUser) {
+            const manualUser = getManualUser();
+            if (manualUser) {
+                renderUserMenu(manualUser);
+            }
+        }
+        document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'none');
+    }
+});
+</script>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="degradado-fondo">
+                <section class="hero-section d-flex justify-content-center align-items-center" id="section_1">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-8 col-12 mx-auto">
+                                <h1 class="text-white text-center">Sistema de Préstamos y Adeudos</h1>
+                                <h6 class="text-center" id="subtexto">Universidad La Salle Nezahualcóyotl</h6>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="featured-section">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-4 col-12 mb-4 mb-lg-0">
+                                <div class="custom-block shadow-lg" id="Bloque1">
+                                    <a href="sistema-prestamos.html">
+                                        <div class="d-flex">
+                                            <div>
+                                                <h5 class="mb-2" id="Bloque1texto">Inicio de Sesión</h5>
+                                                <p class="mb-0" id="Bloque1texto2">Accede a tu cuenta o regístrate para comenzar</p>
+                                            </div>
+                                            <span class="badge bg-design rounded-pill ms-auto">1</span>
+                                        </div>
+                                        <img src="images/topics/undraw_Remote_design_team_re_urdx.png" class="custom-block-image img-fluid" alt="">
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 col-12">
+                                <div class="custom-block custom-block-overlay">
+                                    <div class="d-flex flex-column h-100">
+                                        <img src="images/businesswoman-using-tablet-analysis.jpg" class="custom-block-image img-fluid" alt="">
+                                        <div class="custom-block-overlay-text d-flex">
+                                            <div>
+                                                <h5 class="text-white mb-2">Sistema de Préstamos y Adeudos</h5>
+                                                <p class="text-white">Accede a tu cuenta para gestionar préstamos y adeudos</p>
+                                                <a href="sistema-prestamos.html" class="btn custom-btn mt-2 mt-lg-3">Iniciar sesión</a>
+                                            </div>
+                                            <span class="badge bg-finance rounded-pill ms-auto">2</span>
+                                        </div>
+                                        <div class="social-share d-flex">
+                                            <p class="text-white me-4">Compartir:</p>
+                                            <ul class="social-icon">
+                                                <li class="social-icon-item">
+                                                    <a href="#" class="social-icon-link bi-twitter"></a>
+                                                </li>
+                                                <li class="social-icon-item">
+                                                    <a href="#" class="social-icon-link bi-facebook"></a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="section-overlay"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="explore-section section-padding" id="section_2">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <h2 class="mb-4">Funciones del Sistema</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="design-tab" data-bs-toggle="tab" data-bs-target="#design-tab-pane" type="button" role="tab" aria-controls="design-tab-pane" aria-selected="true">Préstamos</button>
+                            </li>
+
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="marketing-tab" data-bs-toggle="tab" data-bs-target="#marketing-tab-pane" type="button" role="tab" aria-controls="marketing-tab-pane" aria-selected="false">Adeudos</button>
+                            </li>
+
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="finance-tab" data-bs-toggle="tab" data-bs-target="#finance-tab-pane" type="button" role="tab" aria-controls="finance-tab-pane" aria-selected="false">Usuarios</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="tab-content" id="myTabContent">
+                                <div class="tab-pane fade show active" id="design-tab-pane" role="tabpanel" aria-labelledby="design-tab" tabindex="0">
+                                    <div class="row">
+                                        <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0">
+                                            <div class="custom-block bg-white shadow-lg">
+                                                <a href="sistema-prestamos.html">
+                                                    <div class="d-flex">
+                                                        <div>
+                                                            <h5 class="mb-2">Iniciar Sesión</h5>
+                                                            <p class="mb-0">Accede a tu cuenta para gestionar tus préstamos</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0">
+                                            <div class="custom-block bg-white shadow-lg">
+                                                <a href="sistema-prestamos.html#register">
+                                                    <div class="d-flex">
+                                                        <div>
+                                                            <h5 class="mb-2">Registrarse</h5>
+                                                            <p class="mb-0">Crea tu cuenta para acceder al sistema</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="marketing-tab-pane" role="tabpanel" aria-labelledby="marketing-tab" tabindex="0">
+                                    <div class="row">
+                                        <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-3">
+                                            <div class="custom-block bg-white shadow-lg">
+                                                <a href="sistema-prestamos.html">
+                                                    <div class="d-flex">
+                                                        <div>
+                                                            <h5 class="mb-2">Estado de Adeudos</h5>
+                                                            <p class="mb-0">Inicia sesión para revisar tus adeudos</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-3">
+                                            <div class="custom-block bg-white shadow-lg">
+                                                <a href="sistema-prestamos.html">
+                                                    <div class="d-flex">
+                                                        <div>
+                                                            <h5 class="mb-2">Estado de Pagos</h5>
+                                                            <p class="mb-0">Inicia sesión para verificar tus pagos</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                               <div class="tab-pane fade" id="finance-tab-pane" role="tabpanel" aria-labelledby="finance-tab" tabindex="0">
+                                    <div class="row">
+                                        <div class="col-lg-6 col-md-6 col-12 mb-4 mb-lg-0">
+                                            <div class="custom-block bg-white shadow-lg">
+                                                <a href="sistema-prestamos.html">
+                                                    <div class="d-flex">
+                                                        <div>
+                                                            <h5 class="mb-2">Acceso al Sistema</h5>
+                                                            <p class="mb-0">Inicia sesión o regístrate para acceder a los servicios</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="timeline-section section-padding" id="section_3">
+                <div class="section-overlay"></div>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <h2 class="text-white mb-4">¿Cómo funciona?</h2>
+                        </div>
+                        <div class="col-lg-10 col-12 mx-auto">
+                            <div class="timeline-container">
+                                <ul class="vertical-scrollable-timeline" id="vertical-scrollable-timeline">
+                                    <div class="list-progress">
+                                        <div class="inner"></div>
+                                    </div>
+
+                                    <li>
+                                        <h4 class="text-white mb-3">1. Registro</h4>
+                                        <p class="text-white">Crea tu cuenta con tu matrícula institucional</p>
+                                        <div class="icon-holder">
+                                          <i class="bi-person"></i>
+                                        </div>
+                                    </li>
+                                    
+                                    <li>
+                                        <h4 class="text-white mb-3">2. Solicitud</h4>
+                                        <p class="text-white">Solicita el material que necesites</p>
+                                        <div class="icon-holder">
+                                          <i class="bi-bookmark"></i>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <h4 class="text-white mb-3">3. Devolución</h4>
+                                        <p class="text-white">Devuelve el material en tiempo y forma</p>
+                                        <div class="icon-holder">
+                                          <i class="bi-bookmark-check"></i>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="faq-section section-padding" id="section_4">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-6 col-12">
+                            <h2 class="mb-4">Preguntas Frecuentes</h2>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="col-lg-5 col-12">
+                            <img src="images/faq_graphic.jpg" class="img-fluid" alt="FAQs">
+                        </div>
+
+                        <div class="col-lg-6 col-12 m-auto">
+                            <div class="accordion" id="accordionExample">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        ¿Cómo solicito un préstamo?
+                                        </button>
+                                    </h2>
+
+                                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                        <div class="accordion-body">
+                                            Primero debes crear una cuenta o iniciar sesión con tu cuenta institucional. Una vez autenticado, podrás acceder al sistema de préstamos para solicitar el material que necesites.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTwo">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        ¿Qué pasa si tengo un adeudo?
+                                        </button>
+                                    </h2>
+
+                                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+                                        <div class="accordion-body">
+                                            Los adeudos deben ser liquidados para poder realizar nuevos préstamos. Consulta con el personal administrativo para más información.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="contact-section section-padding section-bg" id="section_5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12 col-12 text-center">
+                            <h2 class="mb-5">Contacto</h2>
+                        </div>
+
+                        <div class="col-lg-5 col-12 mb-4 mb-lg-0">
+                            <iframe class="google-map" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d289.3706753574106!2d-99.0167062279864!3d19.42374821649627!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1ses!2smx!4v1749062349937!5m2!1ses!2smx" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-12 mb-3 mb-lg- mb-md-0 ms-auto">
+                            <h4 class="mb-3">Ubicación</h4>
+                            <p>Colonia Cd. Jardín Bicentenario, Av. Bordo de Xochiaca s/n-B, Manzana polígono IV, 57205 Cdad. Nezahualcóyotl, Méx.</p>
+                            <hr>
+                            <p class="d-flex align-items-center mb-1">
+                                <span class="me-2">Teléfono</span>
+                                <a href="tel:+525522281897;ext=1153" class="site-footer-link">
+                                    +52 (55) 2228 1897 ext. 1153
+                                </a>
+
+                            </p>
+
+                            <p class="d-flex align-items-center">
+                                <span class="me-2">Email</span>
+                                <a href="prestamos@ulsaneza.edu.mx" class="site-footer-link">
+                                    prestamos@ulsaneza.edu.mx
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <footer class="site-footer section-padding">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-12 mb-4 pb-2">
+                        <a class="navbar-brand" href="index.html">
+                        <img src="images/lasalle-logo.jpg" alt="Logo La Salle" style="height: 90px; vertical-align: middle; margin-right: 8px;">
+                        </a>
+                    </div>
+
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <h6 class="site-footer-title mb-3">Recursos</h6>
+
+                        <ul class="site-footer-links">
+                            <li class="site-footer-link-item">
+                                <a href="index.html#section_1" class="site-footer-link">Inicio</a>
+                            </li>
+
+                            <li class="site-footer-link-item">
+                                <a href="index.html#section_3" class="site-footer-link">Como funciona</a>
+                            </li>
+
+                            <li class="site-footer-link-item">
+                                <a href="index.html#section_4" class="site-footer-link">Preguntas Comunes</a>
+                            </li>
+
+                            <li class="site-footer-link-item">
+                                <a href="#section_5" class="site-footer-link">Contacto</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-lg-3 col-md-4 col-6 mb-4 mb-lg-0">
+                        <h6 class="site-footer-title mb-3">Información</h6>
+
+                        <p class="text-white d-flex mb-1">
+                            <a href="tel: +525522281897" class="site-footer-link">
+                                +52 (55) 2228-1897 ext. 1153
+                            </a>
+                        </p>
+
+                        <p class="text-white d-flex">
+                            <a href="mailto:jperez@ulsaneza.edu.mx" class="site-footer-link">
+                                jperez@ulsaneza.edu.mx
+                            </a>
+                        </p>
+                    </div>
+
+                    <div class="col-lg-3 col-md-4 col-12 mt-4 mt-lg-0 ms-auto">
+
+                        <p class="copyright-text mt-lg-5 mt-4">Copyright © 2025 Universidad La Salle Nezahualcóyotl. Todos los derechos reservados.
+                        <br><br>Diseño: <a rel="nofollow" href="https://www.linkedin.com/in/kevin-sandoval-762726361/" target="_blank">Kevin Sandoval</a></p>
+                        
+                    </div>
+
+                </div>
+            </div>
+        </footer>
+        </main>
+
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script src="js/jquery.min.js"></script>
+        <script src="js/jquery.sticky.js"></script>
+        <script src="js/click-scroll.js"></script>
+        <script src="js/custom.js"></script>        <script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                const isAdmin = await checkIfAdmin();
+                
+                // Actualizar la interfaz basada en el rol
+                updateUIByRole();
+
+                // Configurar los enlaces de administración
+                document.querySelectorAll('a').forEach(link => {
+                    // Solo interceptar enlaces que no sean del menú de administración
+                    if (
+                        !link.closest('.dropdown-menu') &&
+                        (link.textContent.toLowerCase().includes('préstamo') || link.textContent.toLowerCase().includes('adeudo'))
+                    ) {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (link.textContent.toLowerCase().includes('préstamo')) {
+                                handleAdminNavigation('prestamos');
+                            } else if (link.textContent.toLowerCase().includes('adeudo')) {
+                                handleAdminNavigation('adeudos');
+                            }
+                        });
+                    }
+                });
+
+                // Verificar autenticación para usuarios no admin
+                if (!isAdmin) {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        const protectedPages = [
+                            'prestamos.html',
+                            'lista-prestamos.html',
+                            'lista-adeudos.html'
+                        ];
+                        
+                        const currentPath = window.location.pathname;
+                        const requiresAuth = protectedPages.some(page => currentPath.endsWith(page));
+                        
+                        if (requiresAuth && !user && !isManualUserAuthenticated()) {
+                            window.location.href = 'sistema-prestamos.html';
+                        }
+                    });
+                }
+            });
+        </script>
+        <script>
+function handleSignOut() {
+    // Limpiar estado de autenticación
+    sessionStorage.removeItem('isAuthenticated');
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userData');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userData');
+
+    // Si hay un usuario de Firebase, hacer logout
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+        firebase.auth().signOut().then(() => {
+            window.location.href = 'sistema-prestamos.html';
+        }).catch((error) => {
+            console.error('Error en cierre de sesión:', error);
+            window.location.href = 'sistema-prestamos.html';
+        });
+    } else {
+        // Si era login manual, solo redirigir
+        window.location.href = 'sistema-prestamos.html';
+    }
+}
+</script>
+<script>
+// Protege páginas que requieren autenticación, permitiendo login manual
+function isManualUserAuthenticated() {
+    return sessionStorage.getItem('isAuthenticated') === 'true' && window.auth && window.auth.authState && window.auth.authState.user;
+}
+document.addEventListener('DOMContentLoaded', async () => {
+    const isAdmin = await checkIfAdmin();
+    if (!isAdmin) {
+        const protectedPages = [
+            'prestamos.html',
+            'lista-prestamos.html',
+            'lista-adeudos.html'
+        ];
+        const currentPath = window.location.pathname;
+        const requiresAuth = protectedPages.some(page => currentPath.endsWith(page));
+        // Check immediately on load
+        if (requiresAuth && !firebase.auth().currentUser && !isManualUserAuthenticated()) {
+            window.location.href = 'sistema-prestamos.html';
+        }
+        // Also listen for auth state changes
+        firebase.auth().onAuthStateChanged((user) => {
+            if (requiresAuth && !user && !isManualUserAuthenticated()) {
+                window.location.href = 'sistema-prestamos.html';
+            }
+        });
+    }
+});
+</script>
+<script type="text/javascript">
+  (function(d, t) {
+      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+      v.onload = function() {
+        window.voiceflow.chat.load({
+          verify: { projectID: '68497d8b326d57d32ddc2515' },
+          url: 'https://general-runtime.voiceflow.com',
+          versionID: 'production',
+          voice: {
+            url: "https://runtime-api.voiceflow.com"
+          }
+        });
+      }
+      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
+  })(document, 'script');
+</script>
+
+    </body>
+</html>

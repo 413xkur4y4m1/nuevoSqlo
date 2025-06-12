@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Notificaciones | Universidad</title>
+  <!-- QRCode.js para generar el código QR en el navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="https://openfpcdn.io/fingerprintjs/v3/iife.min.js"></script>
+  <script src="js/fingerprint-manager.js"></script>
+  <script src="js/admin-protection.js"></script>
+  <style>
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+   
+              :root {
+  --white-color:                  #ffffff;
+  --primary-color:                #13547a;
+  --secondary-color:              #cc2525;
+  --section-bg-color:             #f0f8ff;
+  --custom-btn-bg-color:          #80d0c7;
+  --custom-btn-bg-hover-color:    #13547a;
+  --dark-color:                   #000000;
+  --p-color:                      #717275;
+  --border-color:                 #7fffd4;
+  --link-hover-color:             red;
+      }
+        body {
+            background: linear-gradient(135deg,#13547a 0%,  #cc2525 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+    .container { 
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #ffffffc2;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    #formEnvio, #qrContainer { 
+        margin-top: 1.5rem; 
+    }
+    label { 
+        display: block; 
+        margin-top: .5rem;
+        font-weight: 500;
+    }
+    input, select, textarea { 
+        width: 100%; 
+        padding: .75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #df8080;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    textarea {
+        height: 150px;
+        resize: vertical;
+    }
+    button {
+        background-color: #e26b5b;
+        color: white;
+        border: none;
+        padding: .75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+    }
+    button:hover {
+        background-color: #106ebe;
+    }
+    .hidden { 
+        display: none; 
+    }
+    .status {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 4px;
+        display: none;
+    }
+    .status.success {
+        background-color: #dff6dd;
+        color: #107c10;
+    }
+    .status.error {
+        background-color: #fde7e9;
+        color: #a80000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sistema de Notificaciones</h1>
+
+    <!-- Formulario de envío -->
+    <form id="formEnvio">
+      <div class="form-group">
+        <label for="matricula">Matrícula:</label>
+        <input type="text" id="matricula" name="matricula" required>
+      </div>
+
+      <div class="form-group">
+        <label for="correo">Correo:</label>
+        <input type="email" id="correo" name="correo" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="tipo">Tipo:</label>
+        <select id="tipo" name="tipo" required>
+          <option value="">-- Seleccionar --</option>
+          <option value="adeudo">Adeudo</option>
+          <option value="prestamo">Préstamo</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="material">Material:</label>
+        <select id="material" name="material" required>
+          <option value="">-- Selecciona material --</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="cantidadObjetosGroup">
+        <label for="cantidad_objetos">Cantidad de objetos:</label>
+        <input type="number" id="cantidad_objetos" name="cantidad_objetos" min="1" step="1">
+      </div>
+
+      <div class="form-group hidden" id="precioGroup">
+        <label for="precio">Cantidad (MXN):</label>
+        <input type="number" id="precio" name="precio" min="0" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label for="asunto">Asunto:</label>
+        <input type="text" id="asunto" name="asunto" required>
+      </div>
+
+      <div class="form-group">
+        <label for="mensaje">Mensaje:</label>
+        <textarea id="mensaje" name="mensaje" required></textarea>
+      </div>
+
+      <button type="submit">Enviar Notificación</button>
+    </form>
+
+    <div id="loading" class="loading hidden">Procesando...</div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>    // Función para mostrar mensaje en la interfaz
+    function mostrarMensaje(mensaje, tipo = 'info') {
+        // Limpiar notificaciones anteriores
+        const notificacionesExistentes = document.querySelectorAll('.notificacion');
+        notificacionesExistentes.forEach(notif => notif.remove());
+
+        const mensajeDiv = document.createElement('div');
+        mensajeDiv.className = 'notificacion';
+        mensajeDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            z-index: 9999;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+            min-width: 250px;
+            white-space: pre-line;
+            line-height: 1.4;
+        `;
+
+        if (tipo === 'error') {
+            mensajeDiv.style.background = '#f8d7da';
+            mensajeDiv.style.color = '#721c24';
+            mensajeDiv.style.borderLeft = '4px solid #dc3545';
+        } else {
+            mensajeDiv.style.background = '#d4edda';
+            mensajeDiv.style.color = '#155724';
+            mensajeDiv.style.borderLeft = '4px solid #28a745';
+        }
+
+        mensajeDiv.textContent = mensaje;
+        document.body.appendChild(mensajeDiv);
+        
+        // Eliminar el mensaje después de 3 segundos
+        setTimeout(() => {
+            mensajeDiv.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => mensajeDiv.remove(), 300);
+        }, 3000);
+    }
+
+    // Función para verificar usuario
+    async function verificarUsuario(correo) {
+        try {
+            console.log('Verificando correo:', correo);
+            const response = await fetch(`http://localhost:3000/api/verify-user?correo=${encodeURIComponent(correo)}`);
+            const data = await response.json();            if (response.ok) {
+                mostrarMensaje(`Usuario encontrado:\n${data.nombre}\n${data.correo}`);
+                console.log('Datos del usuario:', data);
+            } else {
+                console.error('Error detallado:', data);
+                let mensaje = data.error;
+                if (data.details && data.details.error) {
+                    mensaje += `\nDetalle: ${data.details.error.message || data.details.error.code}`;
+                }
+                mostrarMensaje(mensaje, 'error');
+            }
+        } catch (error) {
+            console.error('Error al verificar:', error);
+            mostrarMensaje('Error al verificar usuario', 'error');
+        }
+    }
+
+    // Funcionalidad del formulario
+    // Funcionalidad del formulario
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('formEnvio');
+      const matriculaInput = document.getElementById('matricula');
+      const correoInput = document.getElementById('correo');
+      const tipoSelect = document.getElementById('tipo');
+      const cantidadObjetosInput = document.getElementById('cantidad_objetos');
+      const cantidadObjetosGroup = document.getElementById('cantidadObjetosGroup');
+      const precioInput = document.getElementById('precio');
+      const precioGroup = document.getElementById('precioGroup');
+      const materialSelect = document.getElementById('material');
+      const mensajeTextarea = document.getElementById('mensaje');
+      const loading = document.getElementById('loading');
+      const status = document.getElementById('status');      // Cargar materiales desde Firebase
+      const materialesRef = firebase.database().ref('materiales');
+      materialesRef.once('value').then(snapshot => {
+        const materiales = snapshot.val();
+        if (materiales) {
+          // Limpiar opciones existentes excepto la primera (placeholder)
+          while (materialSelect.options.length > 1) {
+            materialSelect.remove(1);
+          }
+          
+          // Agregar cada material al select
+          Object.entries(materiales).forEach(([id, material]) => {
+            let opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = material.nombre;
+            opt.dataset.precio = material.precio_unitario;
+            materialSelect.appendChild(opt);
+          });
+        }
+      }).catch(error => {
+        console.error('Error cargando materiales:', error);
+      });
+
+      // Actualizar precio al seleccionar material
+      materialSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption && selectedOption.dataset.precio) {
+          precioInput.value = selectedOption.dataset.precio;
+          precioInput.readOnly = true;
+        } else {
+          precioInput.value = '';
+          precioInput.readOnly = false;
+        }
+      });      // Actualizar precio al seleccionar material
+      materialSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption && selectedOption.dataset.precio) {
+          precioInput.value = selectedOption.dataset.precio;
+          precioInput.readOnly = true;
+        } else {
+          precioInput.value = '';
+          precioInput.readOnly = false;
+        }
+      });
+
+      // Autocompletar correo
+      matriculaInput.addEventListener('input', function() {
+        correoInput.value = this.value ? this.value + '@ulsaneza.edu.mx' : '';
+      });
+
+      // Mostrar/ocultar campos según tipo
+      tipoSelect.addEventListener('change', function() {
+        if (this.value === "prestamo") {
+          cantidadObjetosGroup.classList.remove('hidden');
+          cantidadObjetosInput.required = true;
+          precioGroup.classList.add('hidden');
+          precioInput.required = false;
+        } else if (this.value === "adeudo") {
+          cantidadObjetosGroup.classList.add('hidden');
+          cantidadObjetosInput.required = false;
+          precioGroup.classList.remove('hidden');
+          precioInput.required = true;
+        }
+        actualizarMensajePredeterminado();
+      });
+
+      // Mensaje automático
+      function actualizarMensajePredeterminado() {
+        const tipo = tipoSelect.value;
+        const cantidad = precioInput.value;
+        const material = materialSelect.options[materialSelect.selectedIndex].text;
+        const cantidadObjetos = cantidadObjetosInput.value;
+        let mensaje = "";
+
+        if (tipo) {
+          mensaje = "Estimado/a alumno/a,\n\n";
+          if (tipo === 'adeudo' && cantidad) {
+            mensaje += `Le informamos que tiene un adeudo pendiente por la cantidad de $${cantidad} MXN.\n\n`;
+          } else if (tipo === 'prestamo' && material && cantidadObjetos) {
+            mensaje += `Se le ha prestado el material: "${material}" por ${cantidadObjetos} objeto(s).\n\n`;
+          }
+          mensaje += "Si tiene alguna duda, no dude en contactarnos.\n\nAtentamente,\nAdministración UL Saneza";
+        }
+        mensajeTextarea.value = mensaje;
+      }
+
+      // Eventos para actualizar mensaje
+      tipoSelect.addEventListener('change', actualizarMensajePredeterminado);
+      precioInput.addEventListener('input', actualizarMensajePredeterminado);
+      materialSelect.addEventListener('change', actualizarMensajePredeterminado);
+      cantidadObjetosInput.addEventListener('input', actualizarMensajePredeterminado);
+
+      // Envío del formulario
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        loading.classList.remove('hidden');
+        status.style.display = 'none';
+
+        try {
+          const data = {
+            correo: correoInput.value,
+            asunto: form.asunto.value,
+            mensaje: mensajeTextarea.value
+          };
+
+          const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+          
+          if (!result.success) {
+            throw new Error(result.message || 'Error al enviar la notificación');
+          }
+
+          status.textContent = 'Notificación enviada exitosamente';
+          status.className = 'status success';
+          form.reset();
+          
+          // Generar código QR con el ID de la notificación
+          if (result.id) {
+            const qrContainer = document.createElement('div');
+            qrContainer.id = 'qr-code';
+            status.appendChild(qrContainer);
+            new QRCode(qrContainer, {
+              text: String(result.id),
+              width: 128,
+              height: 128
+            });
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          status.textContent = error.message;
+          status.className = 'status error';
+        } finally {
+          loading.classList.add('hidden');
+          status.style.display = 'block';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

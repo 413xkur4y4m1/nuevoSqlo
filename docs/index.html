@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Préstamos ULSA - Documentación</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ulsa-blue: #0078d4;
+            --ulsa-dark-blue: #106ebe;
+            --ulsa-light-blue: #e6f3ff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg-light: #f8f9fa;
+        }
+
+        * { 
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        /* App Bar */
+        .app-bar {
+            background: linear-gradient(135deg, var(--ulsa-blue), var(--ulsa-dark-blue));
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo i {
+            margin-right: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.2);
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: white;
+            color: var(--ulsa-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 100px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,120,212,0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--ulsa-light-blue);
+        }
+
+        .card-header i {
+            font-size: 2rem;
+            color: var(--ulsa-blue);
+            margin-right: 1rem;
+        }
+
+        .card-header h2 {
+            color: var(--ulsa-blue);
+            font-size: 1.8rem;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        /* Interactive Elements */
+        .interactive-demo {
+            background: var(--bg-light);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .demo-btn {
+            background: var(--ulsa-blue);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .demo-btn:hover {
+            background: var(--ulsa-dark-blue);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,120,212,0.3);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, var(--ulsa-blue), var(--ulsa-dark-blue));
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 1.5rem 0 1.5rem 80px;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 2rem;
+            width: 30px;
+            height: 30px;
+            background: var(--ulsa-blue);
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0,120,212,0.3);
+        }
+
+        .timeline-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Architecture Diagram */
+        .architecture-diagram {
+            background: var(--bg-light);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .layer {
+            background: white;
+            margin: 1rem 0;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .layer:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .layer-frontend { border-left: 5px solid var(--success); }
+        .layer-backend { border-left: 5px solid var(--ulsa-blue); }
+        .layer-database { border-left: 5px solid var(--warning); }
+        .layer-security { border-left: 5px solid var(--danger); }
+
+        /* Use Cases */
+        .use-case {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 5px solid var(--ulsa-blue);
+            transition: all 0.3s ease;
+        }
+
+        .use-case:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .use-case-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .use-case-icon {
+            background: var(--ulsa-light-blue);
+            color: var(--ulsa-blue);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+            color: var(--ulsa-blue);
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .feature-card:hover {
+            border-color: var(--ulsa-blue);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            background: var(--ulsa-light-blue);
+            color: var(--ulsa-blue);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .nav-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Scroll Progress */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(to right, var(--ulsa-blue), var(--success));
+            z-index: 1001;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- App Bar -->
+    <div class="app-bar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-university"></i>
+                ULSA Préstamos
+            </a>
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showSection('overview')">
+                    <i class="fas fa-home"></i> Vista General
+                </button>
+                <button class="nav-btn" onclick="showSection('features')">
+                    <i class="fas fa-star"></i> Características
+                </button>
+                <button class="nav-btn" onclick="showSection('architecture')">
+                    <i class="fas fa-sitemap"></i> Arquitectura
+                </button>
+                <button class="nav-btn" onclick="showSection('methodology')">
+                    <i class="fas fa-cogs"></i> Metodología
+                </button>
+                <button class="nav-btn" onclick="showSection('usecases')">
+                    <i class="fas fa-users"></i> Casos de Uso
+                </button>
+                <button class="nav-btn" onclick="showSection('security')">
+                    <i class="fas fa-shield-alt"></i> Seguridad
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Overview Section -->
+        <div id="overview" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-rocket"></i>
+                    <h2>Sistema de Préstamos ULSA</h2>
+                </div>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem; color: var(--text-light);">
+                    Plataforma web moderna para la gestión eficiente de préstamos de equipos y materiales universitarios
+                </p>
+                
+                <div class="grid-2">
+                    <div>
+                        <h3><i class="fas fa-bullseye" style="color: var(--ulsa-blue);"></i> Objetivo del Proyecto</h3>
+                        <p>Desarrollar una solución integral que digitalice y optimice el proceso de préstamos en la Universidad La Salle, 
+                        proporcionando una experiencia fluida tanto para estudiantes como para administradores, con autenticación segura 
+                        y seguimiento en tiempo real.</p>
+                    </div>
+                    <div>
+                        <h3><i class="fas fa-users" style="color: var(--ulsa-blue);"></i> Dirigido a</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li><i class="fas fa-user-graduate" style="color: var(--success);"></i> Estudiantes ULSA</li>
+                            <li><i class="fas fa-user-tie" style="color: var(--ulsa-blue);"></i> Personal Administrativo</li>
+                            <li><i class="fas fa-user-shield" style="color: var(--warning);"></i> Coordinadores de Laboratorio</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="interactive-demo">
+                    <h3>Experiencia del Usuario</h3>
+                    <p>El sistema ofrece una experiencia intuitiva desde el primer contacto:</p>
+                    <button class="demo-btn" onclick="simulateLogin()">
+                        <i class="fas fa-sign-in-alt"></i> Simular Login
+                    </button>
+                    <button class="demo-btn" onclick="simulateLoan()">
+                        <i class="fas fa-hand-holding"></i> Simular Préstamo
+                    </button>
+                    <button class="demo-btn" onclick="simulateReturn()">
+                        <i class="fas fa-undo"></i> Simular Devolución
+                    </button>
+                    <div id="demoResult" style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 10px; display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div id="features" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-star"></i>
+                    <h2>Características Principales</h2>
+                </div>
+                
+                <div class="grid-3">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <h3>Autenticación Dual</h3>
+                        <p>Sistema robusto con Microsoft Azure AD y autenticación por correo institucional</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-fingerprint"></i>
+                        </div>
+                        <h3>FingerprintJS</h3>
+                        <p>Identificación única de dispositivos para mayor seguridad y prevención de fraudes</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>Tiempo Real</h3>
+                        <p>Actualizaciones instantáneas con Firebase Realtime Database</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Seguimiento</h3>
+                        <p>Control completo de préstamos, devoluciones y adeudos pendientes</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3>Responsive</h3>
+                        <p>Diseño adaptativo para cualquier dispositivo móvil o desktop</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3>Notificaciones</h3>
+                        <p>Alertas automáticas para recordatorios y cambios de estado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Section -->
+        <div id="architecture" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-sitemap"></i>
+                    <h2>Arquitectura del Sistema</h2>
+                </div>
+                
+                <div class="architecture-diagram">
+                    <div class="layer layer-frontend">
+                        <h3><i class="fas fa-desktop"></i> Frontend (Cliente)</h3>
+                        <div class="grid-2">
+                            <div>
+                                <h4>Tecnologías</h4>
+                                <ul style="text-align: left;">
+                                    <li>HTML5 Semántico</li>
+                                    <li>CSS3 + Flexbox/Grid</li>
+                                    <li>JavaScript ES6+</li>
+                                    <li>Bootstrap 4.5.0</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Librerías</h4>
+                                <ul style="text-align: left;">
+                                    <li>Firebase SDK 8.10.1</li>
+                                    <li>FingerprintJS v3</li>
+                                    <li>Font Awesome Icons</li>
+                                    <li>SweetAlert2</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer layer-backend">
+                        <h3><i class="fas fa-server"></i> Backend (Servidor)</h3>
+                        <div class="grid-2">
+                            <div>
+                                <h4>Servicios</h4>
+                                <ul style="text-align: left;">
+                                    <li>Firebase Authentication</li>
+                                    <li>Firebase Realtime Database</li>
+                                    <li>Microsoft Azure AD</li>
+                                    <li>Node.js Express Server</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>APIs</h4>
+                                <ul style="text-align: left;">
+                                    <li>Microsoft Graph API</li>
+                                    <li>Firebase REST API</li>
+                                    <li>FingerprintJS Pro API</li>
+                                    <li>Custom Authentication API</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer layer-database">
+                        <h3><i class="fas fa-database"></i> Base de Datos</h3>
+                        <div class="code-block" data-lang="JSON">
+{
+  "users": {
+    "userId": {
+      "email": "estudiante@lasalle.mx",
+      "name": "Juan Pérez",
+      "role": "student",
+      "fingerprint": "hash_dispositivo",
+      "created": "timestamp"
+    }
+  },
+  "loans": {
+    "loanId": {
+      "userId": "user123",
+      "equipment": "Laptop Dell",
+      "status": "active",
+      "loanDate": "2024-01-15",
+      "returnDate": null,
+      "dueDate": "2024-01-22"
+    }
+  }
+}
+                        </div>
+                    </div>
+                    
+                    <div class="layer layer-security">
+                        <h3><i class="fas fa-shield-alt"></i> Capa de Seguridad</h3>
+                        <div class="grid-2">
+                            <div>
+                                <h4>Autenticación</h4>
+                                <ul style="text-align: left;">
+                                    <li>OAuth 2.0 Microsoft</li>
+                                    <li>JWT Tokens</li>
+                                    <li>Session Management</li>
+                                    <li>Device Fingerprinting</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Protección</h4>
+                                <ul style="text-align: left;">
+                                    <li>HTTPS/SSL Encryption</li>
+                                    <li>XSS Protection</li>
+                                    <li>CSRF Tokens</li>
+                                    <li>Rate Limiting</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Methodology Section -->
+        <div id="methodology" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cogs"></i>
+                    <h2>Metodología SCRUM</h2>
+                </div>
+                
+                <p style="margin-bottom: 2rem;">El proyecto fue desarrollado siguiendo la metodología ágil SCRUM con sprints de 2 semanas cada uno, 
+                permitiendo entregas iterativas y mejora continua del producto.</p>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3><i class="fas fa-play-circle" style="color: var(--success);"></i> Sprint 1 - Fundación (2 semanas)</h3>
+                            <div class="grid-2">
+                                <div>
+                                    <h4>Objetivos</h4>
+                                    <ul>
+                                        <li>Configuración inicial del proyecto</li>
+                                        <li>Estructura de archivos y carpetas</li>
+                                        <li>Diseño de la interfaz principal</li>
+                                        <li>Sistema de autenticación básico</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4>Entregables</h4>
+                                    <ul>
+                                        <li>✅ Página de login funcional</li>
+                                        <li>✅ Estructura HTML/CSS base</li>
+                                        <li>✅ Integración con Firebase</li>
+                                        <li>✅ Prototipo navegable</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3><i class="fas fa-shield-alt" style="color: var(--ulsa-blue);"></i> Sprint 2 - Seguridad (2 semanas)</h3>
+                            <div class="grid-2">
+                                <div>
+                                    <h4>Objetivos</h4>
+                                    <ul>
+                                        <li>Integración con Microsoft Azure AD</li>
+                                        <li>Implementación de FingerprintJS</li>
+                                        <li>Sistema de roles y permisos</li>
+                                        <li>Validación de correos institucionales</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4>Entregables</h4>
+                                    <ul>
+                                        <li>✅ Login con Microsoft funcional</li>
+                                        <li>✅ Detección de dispositivos</li>
+                                        <li>✅ Control de acceso por roles</li>
+                                        <li>✅ Validación de dominios</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3><i class="fas fa-handshake" style="color: var(--warning);"></i> Sprint 3 - Funcionalidad Core (2 semanas)</h3>
+                            <div class="grid-2">
+                                <div>
+                                    <h4>Objetivos</h4>
+                                    <ul>
+                                        <li>Sistema de préstamos completo</li>
+                                        <li>Gestión de devoluciones</li>
+                                        <li>Control de adeudos</li>
+                                        <li>Notificaciones en tiempo real</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4>Entregables</h4>
+                                    <ul>
+                                        <li>✅ CRUD de préstamos</li>
+                                        <li>✅ Dashboard administrativo</li>
+                                        <li>✅ Sistema de alertas</li>
+                                        <li>✅ Reportes básicos</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Use Cases Section -->
+        <div id="usecases" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-users"></i>
+                    <h2>Casos de Uso</h2>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-header">
+                        <div class="use-case-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h3>Estudiante - Solicitar Préstamo</h3>
+                    </div>
+                    <p><strong>Actor:</strong> Estudiante ULSA</p>
+                    <p><strong>Descripción:</strong> Un estudiante desea solicitar el préstamo de un equipo disponible</p>
+                    <p><strong>Flujo:</strong></p>
+                    <ol>
+                        <li>Estudiante accede al sistema con su cuenta institucional</li>
+                        <li>Navega al catálogo de equipos disponibles</li>
+                        <li>Selecciona el equipo deseado y especifica duración</li>
+                        <li>Sistema verifica disponibilidad y estado del estudiante</li>
+                        <li>Se genera la solicitud y notifica al administrador</li>
+                        <li>Administrador aprueba y registra la entrega</li>
+                    </ol>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-header">
+                        <div class="use-case-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h3>Administrador - Gestionar Inventario</h3>
+                    </div>
+                    <p><strong>Actor:</strong> Personal Administrativo</p>
+                    <p><strong>Descripción:</strong> El administrador gestiona el inventario y controla los préstamos</p>
+                    <p><strong>Flujo:</strong></p>
+                    <ol>
+                        <li>Administrador accede al panel de control</li>
+                        <li>Visualiza estado en tiempo real de todos los equipos</li>
+                        <li>Puede agregar, modificar o dar de baja equipos</li>
+                        <li>Gestiona solicitudes pendientes de aprobación</li>
+                        <li>Controla devoluciones y registra el estado de los equipos</li>
+                        <li>Genera reportes de uso y disponibilidad</li>
+                    </ol>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-header">
+                        <div class="use-case-icon">
+                            <i class="fas fa-undo"></i>
+                        </div>
+                        <h3>Sistema - Recordatorio Automático</h3>
+                    </div>
+                    <p><strong>Actor:</strong> Sistema Automatizado</p>
+                    <p><strong>Descripción:</strong> El sistema envía recordatorios automáticos sobre devoluciones pendientes</p>
+                    <p><strong>Flujo:</strong></p>
+                    <ol>
+                        <li>Sistema verifica diariamente fechas de vencimiento</li>
+                        <li>Identifica préstamos próximos a vencer (2 días antes)</li>
+                        <li>Envía notificación por correo al estudiante</li>
+                        <li>Registra el recordatorio en el historial</li>
+                        <li>Si hay retraso, notifica también al administrador</li>
+                        <li>Actualiza el estado del préstamo a "vencido" si es necesario</li>
+                    </ol>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-header">
+                        <div class="use-case-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Estudiante - Consultar Adeudos</h3>
+                    </div>
+                    <p><strong>Actor:</strong> Estudiante ULSA</p>
+                    <p><strong>Descripción:</strong> Un estudiante consulta su historial y adeudos pendientes</p>
+                    <p><strong>Flujo:</strong></p>
+                    <ol>
+                        <li>Estudiante accede a su perfil personal</li>
+                        <li>Visualiza historial completo de préstamos</li>
+                        <li>Identifica préstamos activos y fechas de vencimiento</li>
+                        <li>Puede solicitar extensión de plazo si está disponible</li>
+                        <li>Recibe información sobre multas o restricciones</li>
+                        <li>Puede contactar al administrador para resolver dudas</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div id="security" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h2>Seguridad del Sistema</h2>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="card" style="margin: 0;">
+                        <h3><i class="fab fa-microsoft" style="color: #0078d4;"></i> Autenticación Microsoft</h3>
+                        <p>El sistema implementa dos métodos robustos de autenticación con Microsoft:</p>
+                        
+                        <h4>1. OAuth 2.0 con Azure AD</h4>
+                        <div class="code-block" data-lang="JavaScript">
+// Configuración Microsoft Provider
+const provider = new firebase.auth.OAuthProvider('microsoft.com');
+provider.setCustomParameters({
+  tenant: 'lasalle-tenant-id',
+  prompt: 'select_account'
+});
+
+// Autenticación
+firebase.auth().signInWithPopup(provider)
+  .then((result) => {
+    const user = result.user;
+    validateInstitutionalEmail(user.email);
+  });
+                        </div>
+                        
+                        <h4>2. Validación de Correo Institucional</h4>
+                        <div class="code-block" data-lang="JavaScript">
+function validateInstitutionalEmail(email) {
+  const allowedDomains = [
+    '@lasalle.mx',
+    '@ulsa.mx',
+    '@estudiantes.lasalle.mx'
+  ];
+  
+  return allowedDomains.some(domain => 
+    email.toLowerCase().endsWith(domain)
+  );
+}
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin: 0;">
+                        <h3><i class="fas fa-fingerprint" style="color: #e74c3c;"></i> FingerprintJS Pro</h3>
+                        <p>Implementación avanzada de identificación de dispositivos:</p>
+                        
+                        <h4>Características de Seguridad:</h4>
+                        <ul>
+                            <li><strong>Prevención de Fraude:</strong> Detecta intentos de acceso sospechosos</li>
+                            <li><strong>Sesiones Múltiples:</strong> Controla accesos simultáneos</li>
+                            <li><strong>Geolocalización:</strong> Verifica ubicación de acceso</li>
+                            <li><strong>Historial de Dispositivos:</strong> Mantiene registro de dispositivos autorizados</li>
+                        </ul>
+                        
+                        <div class="code-block" data-lang="JavaScript">
+// Inicialización FingerprintJS
+import FingerprintJS from '@fingerprintjs/fingerprintjs-pro';
+
+const fp = await FingerprintJS.load({
+  apiKey: 'YOUR_API_KEY',
+  region: 'us'
+});
+
+// Obtener fingerprint del dispositivo
+const result = await fp.get();
+const visitorId = result.visitorId;
+
+// Validar dispositivo
+validateDeviceAccess(visitorId, userEmail);
+                        </div>
+                        
+                        <h4>Flujo de Validación:</h4>
+                        <ol>
+                            <li>Usuario inicia sesión</li>
+                            <li>Sistema captura fingerprint del dispositivo</li>
+                            <li>Compara con dispositivos autorizados</li>
+                            <li>Si es nuevo, requiere verificación adicional</li>
+                            <li>Registra el dispositivo tras aprobación</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-lock" style="color: var(--warning);"></i> Medidas de Seguridad Adicionales</h3>
+                    <div class="grid-3">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <h4>JWT Tokens</h4>
+                            <p>Tokens seguros con expiración automática para mantener sesiones activas</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-virus"></i>
+                            </div>
+                            <h4>Protección XSS</h4>
+                            <p>Sanitización de inputs y validación de datos para prevenir ataques</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h4>HTTPS/SSL</h4>
+                            <p>Encriptación completa de datos en transmisión</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation functionality
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Update active button
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update progress bar
+            updateProgressBar();
+        }
+
+        // Progress bar functionality
+        function updateProgressBar() {
+            const sections = ['overview', 'features', 'architecture', 'methodology', 'usecases', 'security'];
+            const activeSection = document.querySelector('.section.active').id;
+            const progress = (sections.indexOf(activeSection) + 1) / sections.length * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Interactive demos
+        function simulateLogin() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <div style="text-align: left;">
+                    <h4><i class="fas fa-sign-in-alt" style="color: var(--success);"></i> Proceso de Login Simulado</h4>
+                    <p><strong>1.</strong> Usuario hace clic en "Iniciar Sesión con Microsoft"</p>
+                    <p><strong>2.</strong> Redirección a Azure AD para autenticación</p>
+                    <p><strong>3.</strong> Validación de correo institucional (@lasalle.mx)</p>
+                    <p><strong>4.</strong> Captura de fingerprint del dispositivo</p>
+                    <p><strong>5.</strong> Verificación de dispositivo autorizado</p>
+                    <p><strong>6.</strong> ✅ Acceso concedido - Bienvenido al sistema</p>
+                </div>
+            `;
+        }
+
+        function simulateLoan() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <div style="text-align: left;">
+                    <h4><i class="fas fa-hand-holding" style="color: var(--ulsa-blue);"></i> Proceso de Préstamo Simulado</h4>
+                    <p><strong>1.</strong> Estudiante selecciona equipo: "Laptop Dell Latitude 7420"</p>
+                    <p><strong>2.</strong> Sistema verifica disponibilidad: ✅ Disponible</p>
+                    <p><strong>3.</strong> Validación de estado del estudiante: ✅ Sin adeudos</p>
+                    <p><strong>4.</strong> Generación de solicitud con ID: LOAN-2024-001</p>
+                    <p><strong>5.</strong> Notificación enviada al admin para aprobación</p>
+                    <p><strong>6.</strong> ✅ Préstamo aprobado - Fecha límite: 7 días</p>
+                </div>
+            `;
+        }
+
+        function simulateReturn() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <div style="text-align: left;">
+                    <h4><i class="fas fa-undo" style="color: var(--warning);"></i> Proceso de Devolución Simulado</h4>
+                    <p><strong>1.</strong> Estudiante marca equipo como "Listo para devolución"</p>
+                    <p><strong>2.</strong> Admin recibe notificación de devolución pendiente</p>
+                    <p><strong>3.</strong> Verificación física del equipo: ✅ Estado óptimo</p>
+                    <p><strong>4.</strong> Actualización del inventario: +1 Laptop disponible</p>
+                    <p><strong>5.</strong> Cierre del préstamo en el sistema</p>
+                    <p><strong>6.</strong> ✅ Devolución completada - Historial actualizado</p>
+                </div>
+            `;
+        }
+
+        // Scroll effects
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * -0.5;
+            document.body.style.transform = `translateY(${rate}px)`;
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateProgressBar();
+            
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+
+        // Auto-scroll progress for demo
+        let autoScrollInterval;
+        
+        function startAutoDemo() {
+            const sections = ['overview', 'features', 'architecture', 'methodology', 'usecases', 'security'];
+            let currentIndex = 0;
+            
+            autoScrollInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % sections.length;
+                showSection(sections[currentIndex]);
+            }, 5000);
+        }
+
+        function stopAutoDemo() {
+            if (autoScrollInterval) {
+                clearInterval(autoScrollInterval);
+            }
+        }
+
+        // Easter egg - double click on logo to start auto demo
+        document.querySelector('.logo').addEventListener('dblclick', () => {
+            startAutoDemo();
+            setTimeout(stopAutoDemo, 30000); // Stop after 30 seconds
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Upload Materiales</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 2rem;">
+  <h1>Subida Masiva de Materiales</h1>
+  <p>Haz clic en el botón para subir todos los materiales a Firebase:</p>
+  <button id="uploadBtn" style="padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; border-radius: 4px;">Subir Materiales</button>
+  <pre id="log" style="margin-top: 1rem; background: #f4f4f4; padding: 1rem; max-height: 300px; overflow-y: auto;"></pre>
+
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAaJx-7t4lTk_Ke2p-C-4pk8v1AwKAMcVo",
+      authDomain: "bdsql-9416f.firebaseapp.com",
+      databaseURL: "https://bdsql-9416f-default-rtdb.firebaseio.com",
+      projectId: "bdsql-9416f",
+      storageBucket: "bdsql-9416f.firebasestorage.app",
+      messagingSenderId: "839033499435",
+      appId: "1:839033499435:web:5d870bee99a6d4d8ca5f6e",
+      measurementId: "G-LTD31T7MYY"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Sanitiza nombre de producto a clave válida
+    function sanitizeKey(name) {
+      return name
+        .toLowerCase()
+        .replace(/["'()]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+    }
+
+    // Obtiene clave única: si existe, añade sufijo numérico
+    async function getUniqueKey(baseKey) {
+      let key = baseKey;
+      let count = 1;
+      while (true) {
+        const snap = await db.ref(`materiales/${key}`).once('value');
+        if (!snap.exists()) return key;
+        key = `${baseKey}${count}`;
+        count++;
+      }
+    }
+
+    // Limpia cadena monetaria
+    function parseMoney(str) {
+      return parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
+    }
+
+    // Lista de materiales completa
+    const materiales = [
+  { marca: 'Winco', producto: 'Miserable chica 10"', precioRaw: '$116.00' },
+  { marca: 'Winco', producto: 'Miserable grande 16"', precioRaw: '$170.00' },
+  { producto: 'Molde para pastel', precioRaw: '$321.00' },
+  { producto: 'Molde para tarta', precioRaw: '$427.00' },
+  { marca: 'Vasconia', producto: 'Olla alta 8 litros', precioRaw: '$482.00' },
+  { producto: 'Pala de madera', precioRaw: '$81.00' },
+  { marca: 'Winco', producto: 'Pala para hielo', precioRaw: '$134.00' },
+  { producto: 'Pala pastelera', precioRaw: '$156.00' },
+  { producto: 'Panera', precioRaw: '$65.00' },
+  { marca: 'Victorinox', producto: 'Pelador rastrillo victorinox', precioRaw: '$107.00' },
+  { producto: 'Pinzas para pan', precioRaw: '$54.00' },
+  { marca: 'Libbey', producto: 'Plato bananero', precioRaw: '$107.00' },
+  { marca: 'Libbey', producto: 'Plato base SL-13', precioRaw: '$321.00' },
+  { marca: 'Libbey', producto: 'Plato cafetero 15 cm.', precioRaw: '$70.00' },
+  { marca: 'Libbey', producto: 'Plato compotero', precioRaw: '$33.00' },
+  { marca: 'Libbey', producto: 'Plato compotero chico (12 cm.)', precioRaw: '$24.00' },
+  { marca: 'Libbey', producto: 'Plato compotero grande (14 cm.)', precioRaw: '$43.00' },
+  { marca: 'Libbey', producto: 'Plato Corona', precioRaw: '$97.00' },
+  { marca: 'Libbey', producto: 'Plato ensalada', precioRaw: '$70.00' },
+  { marca: 'Libbey', producto: 'Plato imperial 30 cm.', precioRaw: '$204.00' },
+  { marca: 'Libbey', producto: 'Plato pan', precioRaw: '$70.00' },
+  { marca: 'Libbey', producto: 'Plato postre', precioRaw: '$70.00' },
+  { marca: 'Libbey', producto: 'Plato SL-11', precioRaw: '$97.00' },
+  { marca: 'Libbey', producto: 'Plato SL-13', precioRaw: '$300.00' },
+  { marca: 'Libbey', producto: 'Plato SL-21', precioRaw: '$300.00' },
+  { marca: 'Libbey', producto: 'Plato SL-25', precioRaw: '$343.00' },
+  { marca: 'Libbey', producto: 'Plato SL-33', precioRaw: '$338.00' },
+  { marca: 'Libbey', producto: 'Plato SL-40', precioRaw: '$249.00' },
+  { marca: 'Libbey', producto: 'Plato SL-5', precioRaw: '$49.00' },
+  { marca: 'Libbey', producto: 'Plato sopero', precioRaw: '$97.00' },
+  { marca: 'Libbey', producto: 'Plato trinche 23 cm.', precioRaw: '$97.00' },
+  { marca: 'Libbey', producto: 'Plato trinche 26 cm.', precioRaw: '$118.00' },
+  { marca: 'Libbey', producto: 'Plato trinche barro 26 cm.', precioRaw: '$118.00' },
+  { marca: 'Libbey', producto: 'Porta sobres de azúcar', precioRaw: '$140.00' },
+  { marca: 'Braun', producto: 'Procesador de alimentos MQ9199XL MultiQuick', precioRaw: '$5,435.00' },
+  { marca: 'Winco', producto: 'Raspa panadería', precioRaw: '$75.00' },
+  { marca: 'Pirex', producto: 'Refractario pirex Chico', precioRaw: '$225.00' },
+  { marca: 'Pirex', producto: 'Refractario pirex Grande', precioRaw: '$439.00' },
+  { marca: 'Pirex', producto: 'Refractario pirex Mediano', precioRaw: '$332.00' },
+  { producto: 'Sacacorchos', precioRaw: '$49.00' },
+  { marca: 'Libbey', producto: 'Salsera', precioRaw: '$105.00' },
+  { marca: 'Libbey', producto: 'Sampler cube SL-52', precioRaw: '$41.00' },
+  { marca: 'Tefal', producto: 'Sartén con teflón 36 cm', precioRaw: '$514.00' },
+  { producto: 'Servilleta de tela', precioRaw: '$54.00' },
+  { producto: 'Shaker', precioRaw: '$225.00' },
+  { producto: 'Silla plegable', precioRaw: '$118.00' },
+  { marca: 'Libbey', producto: 'Sufflera', precioRaw: '$124.00' },
+  { producto: 'Tabla', precioRaw: '$321.00' },
+  { producto: 'Tablón', precioRaw: '$1,069.00' },
+  { marca: 'Silpat', producto: 'Tapete de silicón Silpat', precioRaw: '$1,284.00' },
+  { marca: 'Libbey', producto: 'Taza cafetera', precioRaw: '$53.00' },
+  { producto: 'Taza medidora', precioRaw: '$90.00' },
+  { marca: 'Braun', producto: 'Taza medidora del Procesador de alimentos', precioRaw: '$1,000.00' },
+  { marca: 'Libbey', producto: 'Tazón', precioRaw: '$129.00' },
+  { producto: 'Tazón de barro', precioRaw: '$70.00' },
+  { marca: 'Ánfora', producto: 'Tenedor postre Mod. París', precioRaw: '$43.00' },
+  { marca: 'Ánfora', producto: 'Tenedor trinche Mod. París', precioRaw: '$47.00' },
+  { producto: 'Vacío', precioRaw: '$0.00' },
+  { marca: 'Presto', producto: 'Válvula olla express', precioRaw: '$0.01' },
+  { marca: 'Crisa', producto: 'Vaso chaiser', precioRaw: '$51.00' },
+  { marca: 'Crisa', producto: 'Vaso collins 10 oz.', precioRaw: '$59.00' },
+  { marca: 'Crisa', producto: 'Vaso de licuadora', precioRaw: '$214.00' },
+  { marca: 'Crisa', producto: 'Vaso highball 12 oz.', precioRaw: '$49.00' },
+  { marca: 'Crisa', producto: 'Vaso old fashioned', precioRaw: '$59.00' },
+  { marca: 'Crisa', producto: 'Vaso Pilsner', precioRaw: '$75.00' }
+];
+
+
+    // Función de subida masiva
+    async function bulkUpload() {
+      const logEl = document.getElementById('log');
+      logEl.textContent = '';
+
+      const añosInflacion = 3;
+      const factor = Math.pow(1.04, añosInflacion);
+      const baseYear = new Date().getFullYear() - añosInflacion;
+
+      for (const item of materiales) {
+        const precioUnit = parseMoney(item.precioRaw);
+        const precioAjust = Number((precioUnit * factor).toFixed(2));
+        const baseKey = sanitizeKey(item.producto);
+        const key = await getUniqueKey(baseKey);
+
+        const payload = {
+          nombre:          item.producto,
+          marca:           item.marca || '',
+          cantidad:        1,
+          precio_unitario: precioUnit,
+          precio_ajustado: precioAjust,
+          anio_compra:     baseYear,
+          proveedor:       '',
+          tipo:            ''
+        };
+
+        try {
+          await db.ref(`materiales/${key}`).set(payload);
+          logEl.textContent += `✅ ${key}: $${precioUnit} → ajustado $${precioAjust}\n`;
+        } catch (err) {
+          logEl.textContent += `❌ Error ${key}: ${err.message}\n`;
+        }
+      }
+      logEl.textContent += '\n¡Bulk-upload completado!';
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', bulkUpload);
+  </script>
+</body>
+</html>

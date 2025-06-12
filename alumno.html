@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login con Microsoft - Firebase</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .login-btn {
+      background: #0078d4;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      min-width: 200px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .login-btn:hover {
+      background: #106ebe;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 120, 212, 0.3);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .microsoft-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      font-weight: 500;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .status.loading {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .user-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #0078d4;
+      box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+    }
+
+    .submit-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+      background: #218838;
+    }
+
+    .instructions {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .instructions h4 {
+      margin-bottom: 10px;
+    }
+
+    .instructions ol {
+      margin-left: 20px;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #0078d4;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .demo-mode {
+      background: #e7f3ff;
+      border: 1px solid #b8daff;
+      color: #004085;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🎓</div>
+    <h2>Sistema de Autenticación Estudiantil</h2>
+    
+    <div class="demo-mode">
+      <strong>Modo Demo:</strong> Como Firebase Auth requiere HTTPS, puedes usar este formulario para simular el registro de estudiante.
+    </div>
+
+    <div class="instructions">
+      <h4>Para usar Firebase Auth real:</h4>
+      <ol>
+        <li>Sube este archivo a un servidor web con HTTPS</li>
+        <li>O usa un servidor local como Live Server en VS Code</li>
+        <li>O despliega en Firebase Hosting, Netlify, etc.</li>
+      </ol>
+    </div>
+    
+    <button id="demoBtn" class="login-btn" onclick="showDemoForm()">
+      <svg class="microsoft-icon" viewBox="0 0 23 23">
+        <path fill="#f35325" d="M1 1h10v10H1z"/>
+        <path fill="#81bc06" d="M12 1h10v10H12z"/>
+        <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+        <path fill="#ffba08" d="M12 12h10v10H12z"/>
+      </svg>
+      Simular Login con Microsoft
+    </button>
+
+    <button id="realLoginBtn" class="login-btn" onclick="tryRealLogin()" style="background: #dc3545;">
+      🔥 Intentar Login Real (Requiere HTTPS)
+    </button>
+    
+    <div id="status" class="status" style="display: none;"></div>
+    
+    <div id="userForm" class="user-form" style="display: none;">
+      <h3 style="text-align: center; margin-bottom: 20px;">Completar Información del Estudiante</h3>
+      <form id="studentForm">
+        <div class="form-group">
+          <label for="nombre">Nombre:</label>
+          <input type="text" id="nombre" name="nombre" required>
+        </div>
+        <div class="form-group">
+          <label for="apellido_p">Apellido Paterno:</label>
+          <input type="text" id="apellido_p" name="apellido_p" required>
+        </div>
+        <div class="form-group">
+          <label for="apellido_m">Apellido Materno:</label>
+          <input type="text" id="apellido_m" name="apellido_m" required>
+        </div>
+        <div class="form-group">
+          <label for="carrera">Carrera:</label>
+          <select id="carrera" name="carrera" required>
+            <option value="">Seleccionar carrera...</option>
+            <option value="Ingeniería en Sistemas">Ingeniería en Sistemas</option>
+            <option value="Ingeniería Industrial">Ingeniería Industrial</option>
+            <option value="Ingeniería Civil">Ingeniería Civil</option>
+            <option value="Licenciatura en Administración">Licenciatura en Administración</option>
+            <option value="Licenciatura en Contaduría">Licenciatura en Contaduría</option>
+            <option value="Licenciatura en Derecho">Licenciatura en Derecho</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="email">Email (simulado de Microsoft):</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <button type="submit" class="submit-btn">Registrar Estudiante</button>
+      </form>
+    </div>
+
+    <div id="userInfo" class="user-form" style="display: none;">
+      <h3 style="text-align: center; margin-bottom: 20px;">✅ Estudiante Registrado</h3>
+      <div id="userDetails"></div>
+    </div>
+  </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+
+    // Elementos del DOM
+    const statusElement = document.getElementById('status');
+    const userForm = document.getElementById('userForm');
+    const userInfo = document.getElementById('userInfo');
+    const studentForm = document.getElementById('studentForm');
+
+    // Función para mostrar estado
+    function showStatus(message, type = 'info') {
+      statusElement.style.display = 'block';
+      statusElement.className = `status ${type}`;
+      
+      if (type === 'loading') {
+        statusElement.innerHTML = `<div class="loading-spinner"></div> ${message}`;
+      } else {
+        statusElement.textContent = message;
+      }
+    }
+
+    // Generar matrícula única
+    function generateMatricula() {
+      const year = new Date().getFullYear();
+      const randomNum = Math.floor(Math.random() * 9000) + 1000;
+      return parseInt(`${year}${randomNum}`);
+    }
+
+    // Obtener fecha actual
+    function getCurrentDate() {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return parseInt(`${year}${month}${day}`);
+    }
+
+    // Mostrar formulario demo
+    function showDemoForm() {
+      userForm.style.display = 'block';
+      userInfo.style.display = 'none';
+      statusElement.style.display = 'none';
+      
+      // Pre-llenar con datos de ejemplo
+      document.getElementById('nombre').value = 'María';
+      document.getElementById('apellido_p').value = 'González';
+      document.getElementById('apellido_m').value = 'López';
+      document.getElementById('carrera').value = 'Ingeniería en Sistemas';
+      document.getElementById('email').value = 'maria.gonzalez@student.edu.mx';
+    }
+
+    // Intentar login real
+    async function tryRealLogin() {
+      try {
+        showStatus('Intentando autenticación con Microsoft...', 'loading');
+        
+        const provider = new firebase.auth.OAuthProvider('microsoft.com');
+        provider.setCustomParameters({
+          tenant: 'common',
+          prompt: 'select_account'
+        });
+
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+
+        showStatus('¡Autenticación exitosa!', 'success');
+        
+        // Procesar datos reales del usuario
+        const fullName = user.displayName || 'Usuario Desconocido';
+        const nameParts = fullName.trim().split(' ').filter(part => part.length > 0);
+        
+        // Pre-llenar formulario con datos reales
+        document.getElementById('nombre').value = nameParts[0] || '';
+        document.getElementById('apellido_p').value = nameParts[1] || '';
+        document.getElementById('apellido_m').value = nameParts[2] || '';
+        document.getElementById('email').value = user.email || '';
+        
+        showDemoForm();
+        
+      } catch (error) {
+        console.error('Error:', error);
+        
+        let errorMessage = 'Error de autenticación';
+        
+        if (error.code === 'auth/operation-not-supported-in-this-environment') {
+          errorMessage = '🚫 Firebase Auth requiere HTTPS. Usa el modo demo o despliega en un servidor web.';
+        } else {
+          errorMessage = `Error: ${error.message}`;
+        }
+        
+        showStatus(errorMessage, 'error');
+      }
+    }    // Manejar envío del formulario
+    studentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      showStatus('Registrando estudiante...', 'loading');
+
+      try {
+        const formData = new FormData(studentForm);
+        const matricula = generateMatricula();
+        const fecha_registro = new Date().toISOString();
+        const fecha_alta = getCurrentDate();
+
+        // Crear objeto de estudiante
+        const studentData = {
+          nombre: formData.get('nombre'),
+          apellido_p: formData.get('apellido_p'),
+          apellido_m: formData.get('apellido_m'),
+          carrera: formData.get('carrera'),
+          email: formData.get('email'),
+          matricula: matricula,
+          fecha_registro: fecha_registro,
+          fecha_alta: fecha_alta,
+          modo: 'demo'
+        };
+
+        // Guardar en Firebase Realtime Database
+        const newStudentRef = firebase.database().ref('alumno').push();
+        await newStudentRef.set(studentData);
+
+        showStatus(`¡Registro exitoso! Tu matrícula es: ${matricula}`, 'success');
+        
+        // Mostrar información del estudiante
+        userInfo.innerHTML = `
+          <h3>Información del Estudiante</h3>
+          <p><strong>Matrícula:</strong> ${matricula}</p>
+          <p><strong>Nombre:</strong> ${studentData.nombre} ${studentData.apellido_p} ${studentData.apellido_m}</p>
+          <p><strong>Carrera:</strong> ${studentData.carrera}</p>
+          <p><strong>Email:</strong> ${studentData.email}</p>
+        `;
+        
+        userForm.style.display = 'none';
+        userInfo.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error:', error);
+        showStatus('Error al registrar estudiante: ' + error.message, 'error');
+      }
+      
+      try {
+        showStatus('Guardando información del estudiante...', 'loading');
+        
+        const formData = new FormData(studentForm);
+        const matricula = generateMatricula();
+        const fechaAlta = getCurrentDate();
+        
+        const userData = {
+          nombre: formData.get('nombre'),
+          apellido_p: formData.get('apellido_p'),
+          apellido_m: formData.get('apellido_m'),
+          carrera: formData.get('carrera'),
+          email: formData.get('email'),
+          matricula: matricula,
+          fecha_alta: fechaAlta,
+          fecha_registro: new Date().toISOString(),
+          modo: 'demo'
+        };
+
+        // Guardar en Firebase
+        const studentRef = await database.ref('alumno').push(userData);
+        
+        showStatus('¡Estudiante registrado exitosamente!', 'success');
+        
+        // Mostrar información del usuario
+        document.getElementById('userDetails').innerHTML = `
+          <div style="display: grid; gap: 10px;">
+            <div><strong>ID:</strong> ${studentRef.key}</div>
+            <div><strong>Nombre:</strong> ${userData.nombre} ${userData.apellido_p} ${userData.apellido_m}</div>
+            <div><strong>Carrera:</strong> ${userData.carrera}</div>
+            <div><strong>Email:</strong> ${userData.email}</div>
+            <div><strong>Matrícula:</strong> ${userData.matricula}</div>
+            <div><strong>Fecha de Alta:</strong> ${userData.fecha_alta}</div>
+          </div>
+        `;
+        
+        userForm.style.display = 'none';
+        userInfo.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error al guardar:', error);
+        showStatus('Error al guardar en la base de datos: ' + error.message, 'error');
+      }
+    });
+
+    // Verificar si estamos en HTTPS
+    if (location.protocol === 'https:' || location.hostname === 'localhost') {
+      console.log('Entorno compatible con Firebase Auth');
+    } else {
+      console.log('Firebase Auth requiere HTTPS o localhost');
+    }
+  </script>
+</body>
+</html>

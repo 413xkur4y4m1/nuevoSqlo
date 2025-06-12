@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Materiales</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1, h2 { color: #444; }
+    input, select { margin: 5px; padding: 5px; font-size: 0.9rem; }
+    button { margin: 5px; padding: 5px 8px; font-size: 0.9rem; }
+    #listaMateriales { display: flex; flex-wrap: wrap; gap: 10px; }
+    .material {
+      flex: 0 0 calc(25% - 10px);
+      box-sizing: border-box;
+      margin: 0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.85rem;
+      line-height: 1.2;
+    }
+    #log { background: #f4f4f4; padding: 10px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>Agregar Material</h1>
+  <input type="text" id="marca" placeholder="Marca">
+  <input type="number" id="anioCompra" placeholder="Año de compra">
+  <input type="text" id="nombre" placeholder="Nombre del material">
+  <input type="number" id="cantidad" placeholder="Cantidad">
+  <input type="number" id="precio" placeholder="Precio unitario">
+  <input type="text" id="proveedor" placeholder="Proveedor">
+  <input type="text" id="tipo" placeholder="Tipo">
+  <button id="addBtn">Agregar</button>
+
+  <h2>Buscar Material</h2>
+  <input type="text" id="buscar" placeholder="Buscar por nombre" oninput="mostrarMateriales()">
+  <div id="listaMateriales"></div>
+
+  <h2>Bulk Upload</h2>
+  <button id="bulkBtn">Subir Lista Completa</button>
+  <div id="log"></div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAaJx-7t4lTk_Ke2p-C-4pk8v1AwKAMcVo",
+      authDomain: "bdsql-9416f.firebaseapp.com",
+      databaseURL: "https://bdsql-9416f-default-rtdb.firebaseio.com",
+      projectId: "bdsql-9416f",
+      storageBucket: "bdsql-9416f.firebasestorage.app",
+      messagingSenderId: "839033499435",
+      appId: "1:839033499435:web:5d870bee99a6d4d8ca5f6e",
+      measurementId: "G-LTD31T7MYY"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Helpers
+    function sanitizeKey(name) {
+      return name.trim().toLowerCase()
+        .replace(/["'()]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+    }
+    async function getUniqueKey(baseKey) {
+      let key = baseKey, count = 1;
+      while ((await db.ref('materiales/' + key).once('value')).exists()) {
+        key = `${baseKey}${count++}`;
+      }
+      return key;
+    }
+    function parseMoney(str) {
+      return parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
+    }
+
+    // Add single material
+    async function agregarMaterial() {
+      const nombreRaw  = document.getElementById('nombre').value;
+      const baseKey    = sanitizeKey(nombreRaw);
+      const key        = await getUniqueKey(baseKey);
+      const marca      = document.getElementById('marca').value || 'n/a';
+      const anioCompra = parseInt(document.getElementById('anioCompra').value) || new Date().getFullYear();
+      const cantidad   = parseInt(document.getElementById('cantidad').value) || 1;
+      const precio     = parseFloat(document.getElementById('precio').value) || 0;
+      const proveedor  = document.getElementById('proveedor').value || '';
+      const tipo       = document.getElementById('tipo').value || '';
+      const años       = new Date().getFullYear() - anioCompra;
+      const factor     = Math.pow(1.04, años);
+      const precioAdj  = Number((precio * factor).toFixed(2));
+      await db.ref('materiales/' + key).set({
+        nombre: nombreRaw,
+        marca,
+        anio_compra: anioCompra,
+        cantidad,
+        precio_unitario: precio,
+        precio_ajustado: precioAdj,
+        proveedor,
+        tipo
+      });
+      mostrarMateriales();
+    }
+
+    // Display materials
+    async function mostrarMateriales() {
+      const filtro = document.getElementById('buscar').value.toLowerCase();
+      const lista  = document.getElementById('listaMateriales');
+      lista.innerHTML = '';
+      const snap = await db.ref('materiales').once('value');
+      snap.forEach(child => {
+        const key = child.key;
+        const data = child.val();
+        if (!data.nombre.toLowerCase().includes(filtro)) return;
+        const div = document.createElement('div');
+        div.className = 'material';
+        div.innerHTML = `
+          <strong>${data.nombre}</strong><br>
+          <small>${data.marca} | Año ${data.anio_compra}</small><br>
+          Cant: ${data.cantidad} | U: $${data.precio_unitario}<br>
+          Aj: $${data.precio_ajustado}<br>
+          <button onclick="modificarCantidad('${key}',1)">+</button>
+          <button onclick="modificarCantidad('${key}',-1)">-</button>
+        `;
+        lista.appendChild(div);
+      });
+    }
+    async function modificarCantidad(key, delta) {
+      const ref = db.ref('materiales/' + key);
+      const snap = await ref.once('value');
+      if (!snap.exists()) return;
+      const nueva = Math.max(0, (snap.val().cantidad || 0) + delta);
+      await ref.update({ cantidad: nueva });
+      mostrarMateriales();
+    }
+
+    document.getElementById('addBtn').addEventListener('click', agregarMaterial);
+    mostrarMateriales();
+  </script>
+</body>
+</html>

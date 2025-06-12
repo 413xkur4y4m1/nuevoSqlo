@@ -1,0 +1,28 @@
+{
+  "name": "sistema-correos-ul-saneza",
+  "version": "1.0.0",
+  "description": "Sistema de envío de correos para la Universidad UL Saneza",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "deploy": "firebase deploy --only hosting"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.4.0",
+    "multer": "^2.0.0",
+    "nodemailer": "^6.10.1",
+    "passport": "^0.7.0",
+    "passport-azure-ad": "^4.3.5",
+    "passport-microsoft": "^2.1.0",
+    "tesseract.js": "^4.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

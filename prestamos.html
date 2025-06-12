@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Préstamo de Materiales</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+  <!-- Estilos adicionales -->
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+    }
+    body.loaded {
+      opacity: 1;
+    }
+    .form-container {
+      max-width: 500px;
+      margin: 2em auto;
+      padding: 2em;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2em;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .form-group {
+      margin-bottom: 1.5em;
+    }
+    .form-style {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #125baf;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .btn:hover {
+      background: #0c4384;
+    }
+    .qr-container {
+      margin-top: 2em;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      text-align: center;
+    }
+    #codigo-qr {
+      margin: 15px auto;
+    }
+    #mensajeQR {
+      color: #28a745;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+    .logo {
+      display: block;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      height: 55px;
+    }
+    .status {
+      padding: 10px 15px;
+      margin-bottom: 1em;
+      border-radius: 6px;
+      display: none;
+    }
+    .status.loading {
+      background: #e9ecef;
+      color: #495057;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    #errorOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 9999;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    #errorMessage {
+      background: #dc3545;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 50px auto;
+    }
+  </style>
+  <script>
+    // Global error handler
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+        showErrorOverlay('Se produjo un error en la aplicación. Por favor, recarga la página.');
+        return false;
+    };
+    
+    // Handle unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+        showErrorOverlay('Error de comunicación. Por favor, verifica tu conexión e intenta nuevamente.');
+    });
+
+    function showErrorOverlay(message) {
+        // Create error overlay if it doesn't exist
+        if (!document.getElementById('errorOverlay')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'errorOverlay';
+            overlay.innerHTML = `
+                <div id="errorMessage">
+                    <h3>Error</h3>
+                    <p id="errorText"></p>
+                    <button onclick="location.reload()" class="btn">Recargar página</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+        
+        document.getElementById('errorText').textContent = message;
+        document.getElementById('errorOverlay').style.display = 'block';
+    }
+  </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>  <!-- Cargar scripts en orden -->
+  <script src="js/firebase-config.js"></script>
+  <script>
+    // Esperar a que Firebase se inicialice
+    window.addEventListener('load', function() {
+      if (typeof firebase === 'undefined') {
+        showErrorOverlay('Error al cargar Firebase. Por favor, verifica tu conexión e intenta nuevamente.');
+        return;
+      }
+    });
+  </script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Esperar a que auth.js se cargue
+    window.addEventListener('load', function() {
+      if (typeof window.auth === 'undefined') {
+        showErrorOverlay('Error al cargar el sistema de autenticación. Por favor, recarga la página.');
+        return;
+      }
+    });
+  </script>
+  <script src="js/auth-init.js"></script>
+  <script src="js/prestamos.js"></script>
+  <script src="js/prestamos-auth.js"></script>
+</head>
+<body>
+  <a href="index.html" class="logo">
+    <img src="images/lasalle-logo.png" alt="Logo La Salle">
+  </a>
+  
+  <div class="form-container">
+    <h2 style="text-align: center; margin-bottom: 1.5em;">Préstamo de Materiales</h2>
+    
+    <!-- Status messages container -->
+    <div id="status" class="status"></div>
+    
+    <div id="login">
+      <p style="text-align: center; margin-bottom: 1em;">Debes iniciar sesión para solicitar un préstamo</p>
+      <a href="sistema-prestamos.html" class="btn">Iniciar sesión</a>
+    </div>
+    
+    <div id="userInfo" style="display:none;" class="user-info">
+      <div>
+        <strong>Usuario:</strong> <span id="userName"></span>
+        <br>
+        <small id="userEmail"></small>
+      </div>
+      <button onclick="logout()" class="btn" style="width: auto; padding: 8px 15px;">Cerrar sesión</button>
+    </div>
+
+    <div class="form-content" style="display:none;">
+      <form id="formPrestamo" onsubmit="event.preventDefault(); solicitarPrestamo();">
+        <div class="form-group">
+          <label for="objeto">Material:</label>
+          <input type="text" id="objeto" class="form-style" required placeholder="Escribe o selecciona un material" autocomplete="off" list="materiales-lista">
+          <datalist id="materiales-lista"></datalist>
+        </div>
+        <div class="form-group">
+          <label for="materia">Materia:</label>
+          <input type="text" id="materia" class="form-style" required placeholder="Nombre de la materia">
+        </div>
+        <div class="form-group">
+          <label for="fecha_limite">Fecha límite de devolución:</label>
+          <input type="date" id="fecha_limite" class="form-style" required>
+        </div>
+        <button type="submit" class="btn">Solicitar préstamo</button>
+      </form>
+    </div>
+    
+    <div id="qrContainer" class="qr-container" style="display:none;">
+      <h3>Código QR del préstamo</h3>
+      <div id="codigo-qr"></div>
+      <p id="mensajeQR"></p>
+    </div>
+  </div>
+
+  <script>
+    // Autocompletado semántico para materiales
+    async function cargarMaterialesParaAutocomplete() {
+      const materialesRef = firebase.database().ref('materiales');
+      const snapshot = await materialesRef.once('value');
+      const materiales = snapshot.val() || {};
+      const datalist = document.getElementById('materiales-lista');
+      datalist.innerHTML = '';
+      Object.values(materiales).forEach(material => {
+        const option = document.createElement('option');
+        option.value = material.nombre;
+        datalist.appendChild(option);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', cargarMaterialesParaAutocomplete);
+  </script>
+</body>
+</html>
