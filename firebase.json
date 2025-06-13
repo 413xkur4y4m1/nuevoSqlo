@@ -1,0 +1,25 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "package.json",
+      "package-lock.json",
+      "server.js",
+      "README.txt",
+      "uploads/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "startServer"
+      }
+    ]
+  },
+"functions": {
+  "source": "functions",
+  "predeploy": []
+}
+}

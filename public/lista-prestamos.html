@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Alumnos con Préstamo</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+    <script src="js/firebase-config.js"></script>    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .list-card {
+            background: white;
+            margin: 15px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .list-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 300;
+            font-size: 2.5em;
+        }
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            font-size: 1.1em;
+        }
+        .volver-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px 25px;
+            background: white;
+            color: #125baf;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .volver-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lista de Préstamos</h1>
+        <div id="lista">
+            <div class="loading">Cargando préstamos...</div>
+        </div>
+        <a href="index.html" class="volver-btn">Volver al Inicio</a>
+    </div>    <script>
+    // Referencias a Firebase
+const prestamosRef = firebase.database().ref('prestamos');
+const materialesRef = firebase.database().ref('materiales');
+
+let materialesMap = {};
+
+materialesRef.on('value', (snapshot) => {
+  const materiales = snapshot.val() || {};
+  materialesMap = {};
+  for (const [id, material] of Object.entries(materiales)) {
+    materialesMap[id] = material;
+    if (id === 'sartn_con_tefln_36_cm') {
+      materialesMap['material1'] = material; // Add mapping for old material1 ID
+    }
+  }
+});
+
+    // Obtener préstamos en tiempo real
+    prestamosRef.on('value', (snapshot) => {
+      const cont = document.getElementById('lista');
+      const prestamos = snapshot.val();
+
+      if (!prestamos) {
+        cont.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: white;">
+            <p style="font-style: italic;">No hay préstamos registrados.</p>
+          </div>`;
+        return;
+      }
+
+      // Ordenar préstamos por fecha (más recientes primero)
+      const prestamosOrdenados = Object.entries(prestamos)
+        .sort(([,a], [,b]) => new Date(b.fecha_registro || b.fecha_prestamo) - new Date(a.fecha_registro || a.fecha_prestamo));
+
+      cont.innerHTML = ''; // Limpiar mensaje de carga
+
+      for (const [key, prestamo] of prestamosOrdenados) {
+        const fechaPrestamo = new Date(prestamo.fecha_prestamo).toLocaleDateString();
+        const fechaLimite = new Date(prestamo.fecha_limite).toLocaleDateString();
+
+        // Verificar si el préstamo está vencido
+        const hoy = new Date();
+        const fechaLimiteDate = new Date(prestamo.fecha_limite);
+        const estaVencido = hoy > fechaLimiteDate && prestamo.estado === 'activo';
+        
+        // Crear tarjeta de préstamo
+        const card = document.createElement('div');
+        card.className = 'list-card';
+        
+        // Determinar el estado visual
+        let estadoColor, estadoBg, estadoTexto;
+        if (estaVencido) {
+            estadoColor = '#dc3545';
+            estadoBg = '#f8d7da';
+            estadoTexto = 'VENCIDO';
+        } else if (prestamo.estado === 'activo') {
+            estadoColor = '#28a745';
+            estadoBg = '#d4edda';
+            estadoTexto = 'ACTIVO';
+        } else {
+            estadoColor = '#6c757d';
+            estadoBg = '#e9ecef';
+            estadoTexto = prestamo.estado.toUpperCase();
+        }
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+            <h3 style="margin: 0; color: #125baf;">${prestamo.nombre_alumno || 'Alumno'}</h3>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <select class="estado-select" data-key="${key}" data-matricula="${prestamo.matricula_alumno}" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd;">
+                <option value="activo" ${prestamo.estado === 'activo' ? 'selected' : ''}>Activo</option>
+                <option value="devuelto" ${prestamo.estado === 'devuelto' ? 'selected' : ''}>Devuelto</option>
+                <option value="perdido" ${prestamo.estado === 'perdido' ? 'selected' : ''}>Perdido</option>
+              </select>
+              <span style="background: ${estadoBg}; color: ${estadoColor}; padding: 4px 8px; border-radius: 4px; font-size: 0.9em;">
+                ${estadoTexto}
+              </span>
+            </div>
+          </div>
+          <div style="display: grid; gap: 8px;">
+            <div><strong>Alumno:</strong> ${prestamo.nombre_alumno}</div>
+            <div><strong>Material:</strong> ${prestamo.nombre_material}</div>
+            <div><strong>Fecha Límite:</strong> ${fechaLimite}</div>
+            <div><strong>Precio:</strong> $${materialesMap[prestamo.id_material]?.precio_unitario || prestamo.precio_unitario || '0'} MXN</div>
+          </div>
+        `;
+        cont.appendChild(card);
+      }
+    }, (error) => {
+      console.error('Error:', error);
+      document.getElementById('lista').innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+          <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; display: inline-block;">
+            <p style="margin: 0;">Error al cargar los préstamos</p>
+            <p style="margin: 5px 0 0 0; font-size: 0.9em;">${error.message}</p>
+          </div>
+        </div>`;
+    });
+
+    // Función para enviar notificación por correo
+    async function enviarNotificacion(prestamo, nuevoEstado) {
+      try {
+        const alumnoSnapshot = await firebase.database()
+          .ref('alumno')
+          .orderByChild('matricula')
+          .equalTo(prestamo.matricula_alumno)
+          .once('value');
+
+        if (!alumnoSnapshot.exists()) {
+          throw new Error('Alumno no encontrado');
+        }
+
+        const alumnoData = Object.values(alumnoSnapshot.val())[0];
+        const correo = alumnoData.correo;
+
+        // Preparar mensaje
+        const asunto = `Estado de préstamo actualizado - ${prestamo.nombre_material}`;
+        let mensaje = `Estimado/a ${prestamo.nombre_alumno},\n\n`;
+        mensaje += `Le informamos que el estado de su préstamo del material "${prestamo.nombre_material}" `;
+        mensaje += `ha sido actualizado a "${nuevoEstado.toUpperCase()}".\n\n`;
+        
+        if (nuevoEstado === 'devuelto') {
+          mensaje += `¡Gracias por devolver el material a tiempo!`;
+        } else if (nuevoEstado === 'perdido') {
+          mensaje += `Por favor, comuníquese con la administración para resolver esta situación.`;
+        }
+        
+        mensaje += `\n\nAtentamente,\nAdministración UL Saneza`;
+
+        // Enviar la notificación usando el endpoint existente
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            correo: correo,
+            asunto: asunto,
+            mensaje: mensaje
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al enviar la notificación');
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Error al enviar notificación:', error);
+        return false;
+      }
+    }
+
+    // Event listener para cambios de estado
+    document.addEventListener('change', async function(e) {
+      if (e.target.classList.contains('estado-select')) {
+        const key = e.target.dataset.key;
+        const nuevoEstado = e.target.value;
+        const matricula = parseInt(e.target.dataset.matricula);
+
+        try {
+          // Obtener datos del préstamo
+          const prestamoRef = firebase.database().ref(`prestamos/${key}`);
+          const prestamoSnapshot = await prestamoRef.once('value');
+          const prestamo = prestamoSnapshot.val();
+
+          await prestamoRef.update({
+            estado: nuevoEstado
+          });
+
+          // Si el estado cambió a perdido, crear adeudo automático
+          if (nuevoEstado === 'perdido') {
+            const adeudosRef = firebase.database().ref('adeudos');
+            const nuevoAdeudo = {
+              fecha_adeudo: new Date().toISOString().split('T')[0],
+              fecha_actualizacion: new Date().toISOString(),
+              matricula_alumno: prestamo.matricula_alumno,
+              nombre_alumno: prestamo.nombre_alumno,
+              monto: prestamo.precio_unitario,
+              descripcion: `Material perdido: ${prestamo.nombre_material}`,
+              estado: 'pendiente',
+              id_material: prestamo.id_material,
+              nombre_material: prestamo.nombre_material
+            };
+            await adeudosRef.push(nuevoAdeudo);
+          }
+
+          // Si el estado cambió a devuelto, actualizar cantidad de material
+          if (nuevoEstado === 'devuelto') {
+            const materialRef = firebase.database().ref(`materiales/${prestamo.id_material}`);
+            const materialSnapshot = await materialRef.once('value');
+            const materialData = materialSnapshot.val();
+
+            if (materialData) {
+              await materialRef.update({
+                cantidad: materialData.cantidad + 1
+              });
+            }
+          }
+
+          // Enviar notificación por correo
+          const notificacionEnviada = await enviarNotificacion(prestamo, nuevoEstado);
+          
+          if (notificacionEnviada) {
+            alert('Estado actualizado y notificación enviada correctamente');
+          } else {
+            alert('Estado actualizado pero hubo un problema al enviar la notificación');
+          }
+
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error al actualizar el estado: ' + error.message);
+        }
+      }
+    });
+    </script>
+</body>
+</html>

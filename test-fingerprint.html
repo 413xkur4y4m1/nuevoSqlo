@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Fingerprint</title>
+    <!-- Include the FingerprintJS script from jsDelivr CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+</head>
+<body>
+    <h1>Tu Visitor ID aparecerá aquí:</h1>
+    <div id="visitorId" style="font-family: monospace; margin: 20px; padding: 10px; background: #f0f0f0;"></div>
+    <script>
+        // Initialize an agent at application startup.
+        async function getFingerprint() {
+            try {
+                // Initialize the agent
+                const fpPromise = FingerprintJS.load();
+                
+                // Get the visitor identifier
+                const fp = await fpPromise;
+                const result = await fp.get();
+                const visitorId = result.visitorId;
+                
+                document.getElementById('visitorId').textContent = visitorId;
+                console.log('Tu Visitor ID es:', visitorId);
+                
+                return visitorId;
+            } catch (error) {
+                console.error('Error al obtener fingerprint:', error);
+                document.getElementById('visitorId').textContent = 'Error: ' + error.message;
+                return null;
+            }
+        }
+
+        getFingerprint();
+    </script>
+</body>
+</html>

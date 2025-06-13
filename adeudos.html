@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generar Adeudo Manual</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <div style="max-width:400px;margin:2em auto;padding:2em;background:#fff;border-radius:12px;box-shadow:0 2px 12px #c8d3e1;">
+    <h2>Registrar Adeudo Manual</h2>
+    <form id="formAdeudo">
+      <label>Matrícula: <input type="text" name="matricula" required></label>
+      <label>Material: <select name="id_material" id="material" required></select></label>
+      <label>Monto: <input type="number" name="monto" min="1" required></label>
+      <label>Descripción: <input type="text" name="descripcion" required></label>
+      <button type="submit">Registrar Adeudo</button>
+    </form>
+    <div id="status"></div>
+  </div>  <script>
+    // Get materials from Firebase
+    const materialesRef = firebase.database().ref('materia11');
+    materialesRef.once('value').then(snapshot => {
+      const material = snapshot.val();
+      if (material) {
+        let o = document.createElement('option');
+        o.value = 'materia11';
+        o.textContent = material.nombre;
+        document.getElementById('material').appendChild(o);
+      }
+    });
+
+    document.getElementById('formAdeudo').onsubmit = async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this));
+
+      try {
+        // Verificar que el alumno existe
+        const alumnosRef = firebase.database().ref('alumno');
+        const alumnoSnapshot = await alumnosRef
+          .orderByChild('matricula')
+          .equalTo(parseInt(formData.matricula))
+          .once('value');
+
+        if (!alumnoSnapshot.exists()) {
+          document.getElementById('status').textContent = "Error: Matrícula de alumno no encontrada";
+          return;
+        }
+
+        // Create a new adeudo in Firebase
+        const newAdeudoRef = firebase.database().ref('adeudos').push();
+        const adeudo = {
+          matricula_alumno: parseInt(formData.matricula),
+          descripcion: formData.descripcion,
+          fecha_adeudo: new Date().toISOString().split('T')[0],
+          monto: parseFloat(formData.monto),
+          estado: 'pendiente'
+      };        newAdeudoRef.set(adeudo)
+          .then(() => {
+            document.getElementById('status').textContent = "Adeudo registrado exitosamente";
+            document.getElementById('formAdeudo').reset();
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('status').textContent = "Error al registrar el adeudo";
+          });
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('status').textContent = "Error al procesar la solicitud";
+      }
+    }
+  </script>
+</body>
+</html>

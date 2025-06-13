@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Préstamo de Cocina</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <div style="max-width:400px;margin:2em auto;padding:2em;background:#fff;border-radius:12px;box-shadow:0 2px 12px #c8d3e1;">
+    <h2>Préstamo de Objetos</h2>
+    <div id="login"><button id="btnLogin">Iniciar sesión con Microsoft</button></div>
+    <div id="userInfo" style="display:none;">
+      <p>Hola, <span id="userName"></span> (<span id="userEmail"></span>)</p>
+      <button onclick="logout()">Cerrar sesión</button>
+    </div>
+    <form id="formPrestamo" style="display:none;">
+      <label>Objeto:
+        <select id="objeto" name="objeto" required>
+          <option value="">--Seleccione--</option>
+        </select>
+      </label>
+      <label>Fecha/hora devolución límite:
+        <input type="datetime-local" id="fecha_limite" required>
+      </label>
+      <label>Materia/Clase:
+        <input type="text" id="materia" required>
+      </label>
+      <button type="submit">Generar Préstamo y QR</button>
+    </form>
+    <div id="qrContainer" style="display:none;">
+      <h4>Código QR del préstamo</h4>
+      <div id="codigo-qr"></div>
+      <div id="mensajeQR"></div>
+    </div>
+  </div>
+  <script src="js/prestamos.js"></script>
+</body>
+</html>
