@@ -337,10 +337,12 @@
           mensaje = "Estimado/a alumno/a,\n\n";
           if (tipo === 'adeudo' && cantidad) {
             mensaje += `Le informamos que tiene un adeudo pendiente por la cantidad de $${cantidad} MXN.\n\n`;
+            mensaje += `Por favor, acuda a Control Escolar para realizar el pago correspondiente.\n\n`;
           } else if (tipo === 'prestamo' && material && cantidadObjetos) {
-            mensaje += `Se le ha prestado el material: "${material}" por ${cantidadObjetos} objeto(s).\n\n`;
+            mensaje += `Le informamos que el material "${material}" por ${cantidadObjetos} objeto(s) ha sido registrado en el sistema.\n\n`;
+            mensaje += `Por favor, cuide el material y recuerde devolverlo en la fecha acordada.\n\n`;
           }
-          mensaje += "Si tiene alguna duda, no dude en contactarnos.\n\nAtentamente,\nAdministración UL Saneza";
+          mensaje += "Atentamente,\nControl Escolar\nUniversidad La Salle Nezahualcóyotl";
         }
         mensajeTextarea.value = mensaje;
       }
@@ -358,7 +360,41 @@
         status.style.display = 'none';
 
         try {
-          const data = {
+          // Obtener los datos del formulario
+          const formData = {
+            matricula: matriculaInput.value,
+            correo: correoInput.value,
+            tipo: tipoSelect.value,
+            material: {
+              id: materialSelect.value,
+              nombre: materialSelect.options[materialSelect.selectedIndex].text
+            },
+            asunto: form.asunto.value,
+            mensaje: mensajeTextarea.value,
+            fecha: new Date().toISOString(),
+            estado: 'pendiente'
+          };
+
+          if (tipoSelect.value === 'adeudo') {
+            formData.monto = parseFloat(precioInput.value);
+          } else if (tipoSelect.value === 'prestamo') {
+            formData.cantidad = parseInt(cantidadObjetosInput.value);
+          }
+
+          // Guardar en Firebase según el tipo
+          const dbRef = tipoSelect.value === 'adeudo' ? 
+            firebase.database().ref('adeudos') : 
+            firebase.database().ref('prestamos');
+          
+          // Generar nueva key para el registro
+          const newRef = dbRef.push();
+          formData.id = newRef.key;
+
+          // Guardar datos en Firebase
+          await newRef.set(formData);
+
+          // Enviar email
+          const emailData = {
             correo: correoInput.value,
             asunto: form.asunto.value,
             mensaje: mensajeTextarea.value
@@ -367,7 +403,7 @@
           const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(emailData)
           });
 
           const result = await response.json();
@@ -376,21 +412,25 @@
             throw new Error(result.message || 'Error al enviar la notificación');
           }
 
-          status.textContent = 'Notificación enviada exitosamente';
+          // Mostrar mensaje de éxito
+          status.textContent = 'Registro guardado y notificación enviada exitosamente';
           status.className = 'status success';
           form.reset();
           
-          // Generar código QR con el ID de la notificación
-          if (result.id) {
-            const qrContainer = document.createElement('div');
-            qrContainer.id = 'qr-code';
-            status.appendChild(qrContainer);
-            new QRCode(qrContainer, {
-              text: String(result.id),
-              width: 128,
-              height: 128
-            });
-          }
+          // Generar código QR
+          const qrContainer = document.createElement('div');
+          qrContainer.id = 'qr-code';
+          status.appendChild(qrContainer);
+          new QRCode(qrContainer, {
+            text: JSON.stringify({
+              id: formData.id,
+              tipo: formData.tipo,
+              matricula: formData.matricula
+            }),
+            width: 128,
+            height: 128
+          });
+
         } catch (error) {
           console.error('Error:', error);
           status.textContent = error.message;

@@ -89,7 +89,12 @@ app.post('/api/send-email', async (req, res) => {
         });
     }
 
-    const bodyHtml = `<div style="font-family: Arial, sans-serif;">${mensaje.replace(/\n/g, '<br>')}</div>`;
+    const bodyHtml = `
+        <div style="font-family: Arial, sans-serif;">
+            ${mensaje.replace(/\n/g, '<br>')}
+            <br><br>
+            <img src="https://413xkur4y4m1.github.io/Prestamos.io/log.jpeg" alt="Notification Image" style="max-width: 100%; height: auto;">
+        </div>`;
 
     const emailData = {
         message: {

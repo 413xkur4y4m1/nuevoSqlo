@@ -38,7 +38,13 @@ app.post('/api/send-email', async (req, res) => {
             from: process.env.EMAIL_USER,
             to: correo,
             subject: asunto,
-            text: mensaje
+            html: `
+                <div style="font-family: Arial, sans-serif;">
+                    ${mensaje}
+                    <br><br>
+                    <img src="https://413xkur4y4m1.github.io/Prestamos.io/log.jpeg" alt="Notification Image" style="max-width: 100%; height: auto;">
+                </div>
+            `
         };
 
         await transporter.sendMail(mailOptions);

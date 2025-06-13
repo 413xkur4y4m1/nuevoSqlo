@@ -203,10 +203,12 @@
           mensaje = "Estimado/a alumno/a,\n\n";
           if (tipo === 'adeudo' && cantidad) {
             mensaje += `Le informamos que tiene un adeudo pendiente por la cantidad de $${cantidad} MXN.\n\n`;
+            mensaje += `Por favor, acuda a Control Escolar para realizar el pago correspondiente.\n\n`;
           } else if (tipo === 'prestamo' && material && cantidadObjetos) {
-            mensaje += `Se le ha prestado el material: "${material}" por ${cantidadObjetos} objeto(s).\n\n`;
+            mensaje += `Le informamos que el material "${material}" por ${cantidadObjetos} objeto(s) ha sido registrado en el sistema.\n\n`;
+            mensaje += `Por favor, cuide el material y recuerde devolverlo en la fecha acordada.\n\n`;
           }
-          mensaje += "Si tiene alguna duda, no dude en contactarnos.\n\nAtentamente,\nAdministración UL Saneza";
+          mensaje += "Atentamente,\nControl Escolar\nUniversidad La Salle Nezahualcóyotl";
         }
         mensajeTextarea.value = mensaje;
       }

@@ -19,7 +19,7 @@
     
     <style>
         .ms-button {
-            background-color: #0078d4;
+            background-color: #a80202;
             color: white;
             border: none;
             padding: 12px 20px;
@@ -34,7 +34,7 @@
             width: 100%;
         }
         .ms-button:hover {
-            background-color: #106ebe;
+            background-color: #f11616;
             transform: translateY(-2px);
         }
         .ms-button img {
@@ -52,7 +52,7 @@
         .divider::after {
             content: '';
             flex: 1;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgb(255, 0, 0);
         }
         .divider span {
             padding: 0 10px;
@@ -90,7 +90,8 @@
             letter-spacing: 0.625px;
             outline: none;
             transition: all 200ms linear;
-            box-shadow: 0 5px 10px 0 rgba(21,21,21,.2);
+            box-shadow: 0 5px 10px 0 rgb(255, 0, 0);
+            box-shadow: 0 20px 50px 0 rgb(255, 0, 0);
         }
         .custom-select option {
             background-color: #3777c0;
@@ -127,7 +128,7 @@
                                                     <input type="password" class="form-style" placeholder="Contraseña" id="loginPassword" required>
                                                     <i class="input-icon uil uil-lock-alt"></i>
                                                 </div>
-                                                <button type="submit" class="btn mt-4">Iniciar sesión</button>
+                                                <button type="submit" class="btn mt-4" id="boton1">Iniciar sesión</button>
                                             </form>
                                             <div class="divider"><span>O</span></div>
                                             <button type="button" class="ms-button" onclick="handleMicrosoftSignIn()">
@@ -148,7 +149,7 @@
                                 <div class="card-back">
                                     <div class="center-wrap">
                                         <div class="section text-center">
-                                            <h4 class="mb-4 pb-3" style="color: #fff; text-shadow: 0 2px 8px rgba(255,255,255,0.5);">Registrarse</h4>
+                                            <h4 class="mb-4 pb-3" id="texto1" style="color: #fff; text-shadow: 0 2px 8px rgba(255,255,255,0.5);">Registrarse</h4>
                                             <form onsubmit="handleRegister(event); return false;">
                                                 <div class="form-group">
                                                     <input type="text" class="form-style" placeholder="Nombre(s)" id="nombre" required>
@@ -174,7 +175,7 @@
                                                     <input type="password" class="form-style" placeholder="Contraseña" id="password" required>
                                                     <i class="input-icon uil uil-lock-alt"></i>
                                                 </div>
-                                                <button type="submit" class="btn mt-4">Registrarse</button>
+                                                <button type="submit" class="btn mt-4" id="boton2">Registrarse</button>
                                             </form>
                                         </div>
                                     </div>

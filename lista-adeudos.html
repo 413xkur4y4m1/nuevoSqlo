@@ -265,7 +265,7 @@
               let mensaje = `Estimado/a ${adeudo.nombre_alumno},\n\n`;
               mensaje += `Le informamos que su adeudo por $${adeudo.monto} MXN ha sido marcado como PAGADO.\n\n`;
               mensaje += `¡Gracias por realizar su pago!\n\n`;
-              mensaje += `Atentamente,\nAdministración UL Saneza`;
+              mensaje += `Atentamente,\nControl Escolar\nUniversidad La Salle Nezahualcóyotl`;
 
               // Enviar notificación
               const response = await fetch('/api/send-email', {

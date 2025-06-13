@@ -292,7 +292,8 @@
           mensaje += `Por favor, comuníquese con la administración para resolver esta situación.`;
         }
         
-        mensaje += `\n\nAtentamente,\nAdministración UL Saneza`;        // Enviar la notificación usando el endpoint existente
+        mensaje += `\n\nAtentamente,\nControl Escolar\nUniversidad La Salle Nezahualcóyotl`;
+        // Enviar la notificación usando el endpoint existente
         const response = await fetch('http://localhost:3000/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
